@@ -1483,7 +1483,7 @@ void InsteonCentral::handlePairingRequest(std::shared_ptr<InsteonPacket> packet)
 	try
 	{
 		uint32_t rawType = packet->destinationAddress() >> 8;
-		LogicalDeviceType deviceType(BaseLib::Systems::DeviceFamilies::INSTEON, rawType);
+		LogicalDeviceType deviceType(2, rawType);
 
 		std::shared_ptr<InsteonPeer> peer(getPeer(packet->senderAddress()));
 		if(peer && peer->getDeviceType() != deviceType)
