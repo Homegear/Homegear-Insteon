@@ -30,7 +30,7 @@
 #ifndef IINSTEONINTERFACE_H_
 #define IINSTEONINTERFACE_H_
 
-#include "../homegear-base/BaseLib.h"
+#include "homegear-base/BaseLib.h"
 
 namespace Insteon {
 

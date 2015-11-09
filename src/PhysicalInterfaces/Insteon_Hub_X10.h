@@ -32,7 +32,7 @@
 
 #include "../InsteonPacket.h"
 #include "IInsteonInterface.h"
-#include "../homegear-base/BaseLib.h"
+#include "homegear-base/BaseLib.h"
 
 #include <thread>
 #include <iostream>
