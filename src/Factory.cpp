@@ -28,10 +28,16 @@
  */
 
 #include "Factory.h"
+#include "../config.h"
 
 BaseLib::Systems::DeviceFamily* InsteonFactory::createDeviceFamily(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler)
 {
 	return new Insteon::Insteon(bl, eventHandler);
+}
+
+std::string getVersion()
+{
+	return VERSION;
 }
 
 BaseLib::Systems::SystemFactory* getFactory()

@@ -255,6 +255,7 @@ Insteon.lo: Insteon.cpp /usr/include/stdc-predef.h Insteon.h \
  /usr/include/homegear-base/HelperFunctions/Net.h \
  /usr/include/homegear-base/Exception.h \
  /usr/include/homegear-base/HelperFunctions/Io.h \
+ /usr/include/homegear-base/LowLevel/Gpio.h \
  /usr/include/homegear-base/DeviceDescription/Devices.h \
  /usr/include/homegear-base/Systems/Packet.h \
  /usr/include/homegear-base/Systems/DeviceTypes.h \
@@ -320,7 +321,6 @@ Insteon.lo: Insteon.cpp /usr/include/stdc-predef.h Insteon.h \
  /usr/include/homegear-base/IQueue.h PhysicalInterfaces/Insteon_Hub_X10.h \
  PhysicalInterfaces/../InsteonPacket.h \
  PhysicalInterfaces/../PhysicalInterfaces/IInsteonInterface.h \
- /usr/include/homegear-base/BaseLib.h \
  PhysicalInterfaces/IInsteonInterface.h InsteonDeviceTypes.h \
  LogicalDevices/InsteonCentral.h LogicalDevices/../InsteonDevice.h \
  LogicalDevices/../InsteonPeer.h LogicalDevices/../InsteonPacket.h \
@@ -972,6 +972,8 @@ Insteon.h:
 
 /usr/include/homegear-base/HelperFunctions/Io.h:
 
+/usr/include/homegear-base/LowLevel/Gpio.h:
+
 /usr/include/homegear-base/DeviceDescription/Devices.h:
 
 /usr/include/homegear-base/Systems/Packet.h:
@@ -1115,8 +1117,6 @@ PhysicalInterfaces/Insteon_Hub_X10.h:
 PhysicalInterfaces/../InsteonPacket.h:
 
 PhysicalInterfaces/../PhysicalInterfaces/IInsteonInterface.h:
-
-/usr/include/homegear-base/BaseLib.h:
 
 PhysicalInterfaces/IInsteonInterface.h:
 

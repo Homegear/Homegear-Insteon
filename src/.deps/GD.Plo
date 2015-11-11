@@ -256,6 +256,7 @@ GD.lo: GD.cpp /usr/include/stdc-predef.h GD.h \
  /usr/include/homegear-base/HelperFunctions/Net.h \
  /usr/include/homegear-base/Exception.h \
  /usr/include/homegear-base/HelperFunctions/Io.h \
+ /usr/include/homegear-base/LowLevel/Gpio.h \
  /usr/include/homegear-base/DeviceDescription/Devices.h \
  /usr/include/homegear-base/Systems/Packet.h \
  /usr/include/homegear-base/Systems/DeviceTypes.h \
@@ -318,8 +319,7 @@ GD.lo: GD.cpp /usr/include/stdc-predef.h GD.h \
  /usr/include/homegear-base/SSDP/SSDP.h \
  /usr/include/homegear-base/Encoding/HTTP.h \
  /usr/include/homegear-base/Variable.h \
- /usr/include/homegear-base/IQueue.h /usr/include/homegear-base/BaseLib.h \
- Insteon.h
+ /usr/include/homegear-base/IQueue.h Insteon.h
 
 /usr/include/stdc-predef.h:
 
@@ -963,6 +963,8 @@ PhysicalInterfaces/IInsteonInterface.h:
 
 /usr/include/homegear-base/HelperFunctions/Io.h:
 
+/usr/include/homegear-base/LowLevel/Gpio.h:
+
 /usr/include/homegear-base/DeviceDescription/Devices.h:
 
 /usr/include/homegear-base/Systems/Packet.h:
@@ -1100,7 +1102,5 @@ PhysicalInterfaces/IInsteonInterface.h:
 /usr/include/homegear-base/Variable.h:
 
 /usr/include/homegear-base/IQueue.h:
-
-/usr/include/homegear-base/BaseLib.h:
 
 Insteon.h:

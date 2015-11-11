@@ -273,17 +273,17 @@ OTOOL64 =
 PACKAGE = homegar-insteon
 PACKAGE_BUGREPORT = sathya@laufers.net
 PACKAGE_NAME = homegar-insteon
-PACKAGE_STRING = homegar-insteon 0.6.0
+PACKAGE_STRING = homegar-insteon 0.6.0-1032
 PACKAGE_TARNAME = homegar-insteon
 PACKAGE_URL = 
-PACKAGE_VERSION = 0.6.0
+PACKAGE_VERSION = 0.6.0-1032
 PATH_SEPARATOR = :
 RANLIB = ranlib
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-VERSION = 0.6.0
+VERSION = 0.6.0-1032
 abs_builddir = /home/PREETZ/sathya/GitHub/Homegear/homegear-insteon/src
 abs_srcdir = /home/PREETZ/sathya/GitHub/Homegear/homegear-insteon/src
 abs_top_builddir = /home/PREETZ/sathya/GitHub/Homegear/homegear-insteon
@@ -356,9 +356,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign src/Makefile
+	  $(AUTOMAKE) --gnu src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

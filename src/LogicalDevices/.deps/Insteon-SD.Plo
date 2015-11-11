@@ -256,6 +256,7 @@ LogicalDevices/Insteon-SD.lo: LogicalDevices/Insteon-SD.cpp \
  /usr/include/homegear-base/HelperFunctions/Net.h \
  /usr/include/homegear-base/Exception.h \
  /usr/include/homegear-base/HelperFunctions/Io.h \
+ /usr/include/homegear-base/LowLevel/Gpio.h \
  /usr/include/homegear-base/DeviceDescription/Devices.h \
  /usr/include/homegear-base/Systems/Packet.h \
  /usr/include/homegear-base/Systems/DeviceTypes.h \
@@ -321,9 +322,8 @@ LogicalDevices/Insteon-SD.lo: LogicalDevices/Insteon-SD.cpp \
  /usr/include/homegear-base/IQueue.h LogicalDevices/../InsteonPeer.h \
  LogicalDevices/../InsteonPacket.h \
  LogicalDevices/../PhysicalInterfaces/IInsteonInterface.h \
- /usr/include/homegear-base/BaseLib.h LogicalDevices/../PendingQueues.h \
- LogicalDevices/../PacketQueue.h /usr/include/c++/4.8/queue \
- /usr/include/c++/4.8/bits/stl_queue.h \
+ LogicalDevices/../PendingQueues.h LogicalDevices/../PacketQueue.h \
+ /usr/include/c++/4.8/queue /usr/include/c++/4.8/bits/stl_queue.h \
  LogicalDevices/../InsteonDeviceTypes.h LogicalDevices/../QueueManager.h \
  LogicalDevices/../PacketManager.h LogicalDevices/../InsteonMessages.h \
  LogicalDevices/../InsteonMessage.h LogicalDevices/../InsteonDevice.h \
@@ -971,6 +971,8 @@ LogicalDevices/../InsteonDevice.h:
 
 /usr/include/homegear-base/HelperFunctions/Io.h:
 
+/usr/include/homegear-base/LowLevel/Gpio.h:
+
 /usr/include/homegear-base/DeviceDescription/Devices.h:
 
 /usr/include/homegear-base/Systems/Packet.h:
@@ -1114,8 +1116,6 @@ LogicalDevices/../InsteonPeer.h:
 LogicalDevices/../InsteonPacket.h:
 
 LogicalDevices/../PhysicalInterfaces/IInsteonInterface.h:
-
-/usr/include/homegear-base/BaseLib.h:
 
 LogicalDevices/../PendingQueues.h:
 
