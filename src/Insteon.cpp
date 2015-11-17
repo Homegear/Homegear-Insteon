@@ -207,7 +207,7 @@ void Insteon::load()
 	try
 	{
 		_devices.clear();
-		std::shared_ptr<BaseLib::Database::DataTable> rows = raiseGetDevices();
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDevices((uint32_t)_family);
 		bool spyDeviceExists = false;
 		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
 		{
