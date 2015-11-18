@@ -44,12 +44,12 @@ void InsteonDevice::setPhysicalInterfaceID(std::string id)
 	}
 }
 
-InsteonDevice::InsteonDevice(IDeviceEventSink* eventHandler) : LogicalDevice(2, GD::bl, eventHandler)
+InsteonDevice::InsteonDevice(IDeviceEventSink* eventHandler) : LogicalDevice(INSTEON_FAMILY_ID, GD::bl, eventHandler)
 {
 	_physicalInterface = GD::defaultPhysicalInterface;
 }
 
-InsteonDevice::InsteonDevice(uint32_t deviceID, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler) : LogicalDevice(2, GD::bl, deviceID, serialNumber, address, eventHandler)
+InsteonDevice::InsteonDevice(uint32_t deviceID, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler) : LogicalDevice(INSTEON_FAMILY_ID, GD::bl, deviceID, serialNumber, address, eventHandler)
 {
 	_physicalInterface = GD::defaultPhysicalInterface;
 }

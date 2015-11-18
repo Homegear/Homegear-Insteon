@@ -47,13 +47,11 @@ public:
 	virtual bool init();
 	virtual void dispose();
 
-	virtual std::shared_ptr<BaseLib::Systems::IPhysicalInterface> createPhysicalDevice(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings);
 	virtual void load();
 	virtual std::shared_ptr<InsteonDevice> getDevice(uint32_t address);
 	virtual std::shared_ptr<InsteonDevice> getDevice(std::string serialNumber);
 	virtual std::shared_ptr<BaseLib::Systems::Central> getCentral();
 	virtual std::string handleCLICommand(std::string& command);
-	virtual std::string getName() { return "INSTEON"; }
 	virtual PVariable getPairingMethods();
 private:
 	std::shared_ptr<InsteonCentral> _central;

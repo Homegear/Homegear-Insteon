@@ -27,14 +27,26 @@
  * files in the program, then also delete it here.
  */
 
-#include "GD.h"
+#ifndef INTERFACES_H_
+#define INTERFACES_H_
+
+#include "homegear-base/BaseLib.h"
 
 namespace Insteon
 {
-	BaseLib::Obj* GD::bl = nullptr;
-	Insteon* GD::family = nullptr;
-	std::map<std::string, std::shared_ptr<IInsteonInterface>> GD::physicalInterfaces;
-	std::shared_ptr<IInsteonInterface> GD::defaultPhysicalInterface;
-	BaseLib::Output GD::out;
-	BaseLib::DeviceDescription::Devices GD::rpcDevices(INSTEON_FAMILY_ID);
+
+using namespace BaseLib;
+
+class Interfaces : public BaseLib::Systems::PhysicalInterfaces
+{
+public:
+	Interfaces(BaseLib::Obj* bl, std::vector<std::shared_ptr<Systems::PhysicalInterfaceSettings>> physicalInterfaceSettings);
+	virtual ~Interfaces();
+
+protected:
+	virtual void create();
+};
+
 }
+
+#endif

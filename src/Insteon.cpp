@@ -28,8 +28,8 @@
  */
 
 #include "Insteon.h"
-#include "PhysicalInterfaces/Insteon_Hub_X10.h"
 #include "InsteonDeviceTypes.h"
+#include "Interfaces.h"
 #include "LogicalDevices/InsteonCentral.h"
 #include "LogicalDevices/Insteon-SD.h"
 #include "GD.h"
@@ -37,15 +37,15 @@
 namespace Insteon
 {
 
-Insteon::Insteon(BaseLib::Obj* bl, IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler)
+Insteon::Insteon(BaseLib::Obj* bl, IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler, INSTEON_FAMILY_ID, "Insteon")
 {
 	GD::bl = bl;
 	GD::family = this;
 	GD::out.init(bl);
-	GD::out.setPrefix("Module INSTEON: ");
+	GD::out.setPrefix("Module Insteon: ");
 	GD::out.printDebug("Debug: Loading module...");
-	_family = 2;
 	GD::rpcDevices.init(_bl, this);
+	_physicalInterfaces.reset(new Interfaces(bl, _settings->getPhysicalInterfaceSettings()));
 }
 
 Insteon::~Insteon()
@@ -73,37 +73,6 @@ void Insteon::dispose()
 }
 
 std::shared_ptr<BaseLib::Systems::Central> Insteon::getCentral() { return _central; }
-
-std::shared_ptr<BaseLib::Systems::IPhysicalInterface> Insteon::createPhysicalDevice(std::shared_ptr<BaseLib::Systems::PhysicalInterfaceSettings> settings)
-{
-	try
-	{
-		std::shared_ptr<IInsteonInterface> device;
-		if(!settings) return device;
-		GD::out.printDebug("Debug: Creating physical device. Type defined in physicalinterfaces.conf is: " + settings->type);
-		if(settings->type == "insteonhubx10") device.reset(new InsteonHubX10(settings));
-		else GD::out.printError("Error: Unsupported physical device type: " + settings->type);
-		if(device)
-		{
-			GD::physicalInterfaces[settings->id] = device;
-			if(settings->isDefault || !GD::defaultPhysicalInterface) GD::defaultPhysicalInterface = device;
-		}
-		return device;
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	return std::shared_ptr<BaseLib::Systems::IPhysicalInterface>();
-}
 
 uint32_t Insteon::getUniqueAddress(uint32_t seed)
 {
@@ -207,7 +176,7 @@ void Insteon::load()
 	try
 	{
 		_devices.clear();
-		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDevices((uint32_t)_family);
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDevices((uint32_t)getFamily());
 		bool spyDeviceExists = false;
 		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
 		{
