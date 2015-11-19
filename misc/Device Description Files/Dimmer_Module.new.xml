@@ -1,0 +1,763 @@
+<homegearDevice version="1">
+	<supportedDevices>
+		<device id="2632-432">
+			<description>Dimmer Module</description>
+			<typeNumber>0x10F</typeNumber>
+			<minFirmwareVersion>0x10</minFirmwareVersion>
+		</device>
+	</supportedDevices>
+	<properties/>
+	<functions>
+		<function channel="0" type="MAINTENANCE" channelCount="1">
+			<properties>
+				<internal>true</internal>
+			</properties>
+			<configParameters>maint_ch_master--0</configParameters>
+			<variables>maint_ch_values--0</variables>
+		</function>
+		<function channel="1" type="SWITCH" channelCount="1">
+			<properties/>
+			<configParameters>config--1</configParameters>
+			<variables>switch_ch_values--1</variables>
+		</function>
+	</functions>
+	<packets>
+		<packet id="ACK_LEVEL_OFF">
+			<direction>toCentral</direction>
+			<type>0x13</type>
+			<channel>1</channel>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<parameterId>LEVEL</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="BEEP">
+			<direction>fromCentral</direction>
+			<type>0x30</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>1</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="BEEP_ON_BUTTON_PRESS_OFF">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>11</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>213</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="BEEP_ON_BUTTON_PRESS_ON">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>10</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>214</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="BRIGHTEN">
+			<direction>fromCentral</direction>
+			<type>0x15</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="DIM">
+			<direction>fromCentral</direction>
+			<type>0x16</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="ERROR_BLINK_OFF">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>20</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>204</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="ERROR_BLINK_ON">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>21</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>203</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="INFO_LEVEL">
+			<direction>toCentral</direction>
+			<type>0x5</type>
+			<channel>1</channel>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<parameterId>LEVEL</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="INFO_LEVEL2">
+			<direction>toCentral</direction>
+			<type>0x3</type>
+			<channel>1</channel>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<parameterId>LEVEL</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="INFO_LEVEL3">
+			<direction>toCentral</direction>
+			<type>0x8</type>
+			<channel>1</channel>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<parameterId>LEVEL</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LED_BLINK_ON_TRAFFIC_OFF">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>3</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>221</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LED_BLINK_ON_TRAFFIC_ON">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>2</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>222</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LED_BRIGHTNESS_SET">
+			<direction>fromCentral</direction>
+			<type>0x2E</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+				<element>
+					<index>9.0</index>
+					<constValueInteger>1</constValueInteger>
+				</element>
+				<element>
+					<index>10.0</index>
+					<constValueInteger>7</constValueInteger>
+				</element>
+				<element>
+					<index>11.0</index>
+					<parameterId>LED_BRIGHTNESS</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LED_OFF">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>8</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>216</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LED_ON">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>9</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>215</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LEVEL_GET">
+			<direction>fromCentral</direction>
+			<type>0x19</type>
+			<responseType>32</responseType>
+			<responseSubtype>3</responseSubtype>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LEVEL_SET">
+			<direction>fromCentral</direction>
+			<type>0x11</type>
+			<doubleSend>true</doubleSend>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<parameterId>LEVEL</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="LEVEL_SET_OFF">
+			<direction>fromCentral</direction>
+			<type>0x13</type>
+			<doubleSend>true</doubleSend>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="ON_LEVEL_SET">
+			<direction>fromCentral</direction>
+			<type>0x2E</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+				<element>
+					<index>9.0</index>
+					<constValueInteger>1</constValueInteger>
+				</element>
+				<element>
+					<index>10.0</index>
+					<constValueInteger>6</constValueInteger>
+				</element>
+				<element>
+					<index>11.0</index>
+					<parameterId>ON_LEVEL</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="PROGRAMMING_LOCK_OFF">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>1</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>223</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="PROGRAMMING_LOCK_ON">
+			<direction>fromCentral</direction>
+			<type>0x20</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+				<element>
+					<index>22.0</index>
+					<constValueInteger>224</constValueInteger>
+				</element>
+			</binaryPayload>
+		</packet>
+		<packet id="RAMP_RATE_SET">
+			<direction>fromCentral</direction>
+			<type>0x2E</type>
+			<binaryPayload>
+				<element>
+					<index>8.0</index>
+					<constValueInteger>0</constValueInteger>
+				</element>
+				<element>
+					<index>9.0</index>
+					<constValueInteger>1</constValueInteger>
+				</element>
+				<element>
+					<index>10.0</index>
+					<constValueInteger>5</constValueInteger>
+				</element>
+				<element>
+					<index>11.0</index>
+					<parameterId>RAMP_RATE</parameterId>
+				</element>
+			</binaryPayload>
+		</packet>
+	</packets>
+	<parameterGroups>
+		<configParameters id="config--1"/>
+		<configParameters id="maint_ch_master--0"/>
+		<variables id="maint_ch_values--0">
+			<parameter id="UNREACH">
+				<properties>
+					<writeable>false</writeable>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="UNREACH">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+			<parameter id="STICKY_UNREACH">
+				<properties>
+					<service>true</service>
+					<sticky>true</sticky>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="STICKY_UNREACH">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+			<parameter id="CONFIG_PENDING">
+				<properties>
+					<writeable>false</writeable>
+					<service>true</service>
+				</properties>
+				<logicalBoolean/>
+				<physicalInteger groupId="CONFIG_PENDING">
+					<operationType>internal</operationType>
+				</physicalInteger>
+			</parameter>
+		</variables>
+		<variables id="switch_ch_values--1">
+			<parameter id="LEVEL">
+				<properties/>
+				<logicalInteger>
+					<minimumValue>0</minimumValue>
+					<maximumValue>255</maximumValue>
+				</logicalInteger>
+				<physicalInteger groupId="LEVEL">
+					<size>1.0</size>
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LEVEL_SET_OFF">
+						<type>set</type>
+						<conditionOperator>e</conditionOperator>
+						<conditionValue>0</conditionValue>
+					</packet>
+					<packet id="LEVEL_SET">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+					<packet id="ACK_LEVEL">
+						<type>event</type>
+					</packet>
+					<packet id="ACK_LEVEL_OFF">
+						<type>event</type>
+					</packet>
+					<packet id="INFO_LEVEL">
+						<type>event</type>
+					</packet>
+					<packet id="INFO_LEVEL2">
+						<type>event</type>
+					</packet>
+					<packet id="INFO_LEVEL3">
+						<type>event</type>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="BEEP">
+				<properties>
+					<readable>false</readable>
+				</properties>
+				<logicalAction/>
+				<physicalInteger groupId="">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="BEEP">
+						<type>set</type>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="BRIGHTEN">
+				<properties>
+					<readable>false</readable>
+				</properties>
+				<logicalAction/>
+				<physicalInteger groupId="">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="BRIGHTEN">
+						<type>set</type>
+						<conditionValue>0</conditionValue>
+					</packet>
+					<packet id="LEVEL_GET">
+						<type>set</type>
+						<conditionValue>0</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="DIM">
+				<properties>
+					<readable>false</readable>
+				</properties>
+				<logicalAction/>
+				<physicalInteger groupId="">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="DIM">
+						<type>set</type>
+						<conditionValue>0</conditionValue>
+					</packet>
+					<packet id="LEVEL_GET">
+						<type>set</type>
+						<conditionValue>0</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="ON_LEVEL">
+				<properties/>
+				<logicalInteger>
+					<minimumValue>0</minimumValue>
+					<maximumValue>255</maximumValue>
+					<defaultValue>255</defaultValue>
+				</logicalInteger>
+				<physicalInteger groupId="ON_LEVEL">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="ON_LEVEL_SET">
+						<type>set</type>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="RAMP_RATE">
+				<properties/>
+				<logicalEnumeration>
+					<defaultValue>28</defaultValue>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>8 minutes</id>
+						<index>1</index>
+					</value>
+					<value>
+						<id>7 minutes</id>
+						<index>2</index>
+					</value>
+					<value>
+						<id>6 minutes</id>
+						<index>3</index>
+					</value>
+					<value>
+						<id>5 minutes</id>
+						<index>4</index>
+					</value>
+					<value>
+						<id>4,5 minutes</id>
+						<index>5</index>
+					</value>
+					<value>
+						<id>4 minutes</id>
+						<index>6</index>
+					</value>
+					<value>
+						<id>3,5 minutes</id>
+						<index>7</index>
+					</value>
+					<value>
+						<id>3 minutes</id>
+						<index>8</index>
+					</value>
+					<value>
+						<id>2,5 minutes</id>
+						<index>9</index>
+					</value>
+					<value>
+						<id>2 minutes</id>
+						<index>10</index>
+					</value>
+					<value>
+						<id>1,5 minutes</id>
+						<index>11</index>
+					</value>
+					<value>
+						<id>1 minute</id>
+						<index>12</index>
+					</value>
+					<value>
+						<id>50 seconds</id>
+						<index>13</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>40 seconds</id>
+						<index>15</index>
+					</value>
+					<value>
+						<id>35 seconds</id>
+						<index>16</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>30 seconds</id>
+						<index>18</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>25 seconds</id>
+						<index>20</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>20 seconds</id>
+						<index>23</index>
+					</value>
+					<value>
+						<id>10 seconds</id>
+						<index>24</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>5 seconds</id>
+						<index>26</index>
+					</value>
+					<value>
+						<id>2 seconds</id>
+						<index>27</index>
+					</value>
+					<value>
+						<id>0.5 seconds</id>
+						<index>28</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id/>
+						<index>-1</index>
+					</value>
+					<value>
+						<id>Instant</id>
+						<index>31</index>
+					</value>
+				</logicalEnumeration>
+				<physicalInteger groupId="RAMP_RATE">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="RAMP_RATE_SET">
+						<type>set</type>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="BEEP_ON_BUTTON_PRESS">
+				<properties>
+					<casts>
+						<booleanInteger>
+							<trueValue>1</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="BEEP_ON_BUTTON_PRESS">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="BEEP_ON_BUTTON_PRESS_ON">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+					<packet id="BEEP_ON_BUTTON_PRESS_OFF">
+						<type>set</type>
+						<conditionOperator>e</conditionOperator>
+						<conditionValue>0</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="ERROR_BLINK">
+				<properties>
+					<casts>
+						<booleanInteger>
+							<trueValue>1</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>true</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="ERROR_BLINK">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="ERROR_BLINK_ON">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+					<packet id="ERROR_BLINK_OFF">
+						<type>set</type>
+						<conditionOperator>e</conditionOperator>
+						<conditionValue>0</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="PROGRAMMING_LOCK">
+				<properties>
+					<casts>
+						<booleanInteger>
+							<trueValue>1</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="PROGRAMMING_LOCK">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="PROGRAMMING_LOCK_ON">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+					<packet id="PROGRAMMING_LOCK_OFF">
+						<type>set</type>
+						<conditionOperator>e</conditionOperator>
+						<conditionValue>0</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="LED_BLINK_ON_TRAFFIC">
+				<properties>
+					<casts>
+						<booleanInteger>
+							<trueValue>1</trueValue>
+						</booleanInteger>
+					</casts>
+				</properties>
+				<logicalBoolean>
+					<defaultValue>false</defaultValue>
+				</logicalBoolean>
+				<physicalInteger groupId="LED_BLINK_ON_TRAFFIC">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LED_BLINK_ON_TRAFFIC_ON">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+					<packet id="LED_BLINK_ON_TRAFFIC_OFF">
+						<type>set</type>
+						<conditionOperator>e</conditionOperator>
+						<conditionValue>0</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+			<parameter id="LED_BRIGHTNESS">
+				<properties/>
+				<logicalInteger>
+					<minimumValue>0</minimumValue>
+					<maximumValue>127</maximumValue>
+					<defaultValue>64</defaultValue>
+				</logicalInteger>
+				<physicalInteger groupId="LED_BRIGHTNESS">
+					<operationType>command</operationType>
+				</physicalInteger>
+				<packets>
+					<packet id="LED_OFF">
+						<type>set</type>
+						<conditionOperator>e</conditionOperator>
+						<conditionValue>0</conditionValue>
+					</packet>
+					<packet id="LED_ON">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+					<packet id="LED_BRIGHTNESS_SET">
+						<type>set</type>
+						<conditionOperator>ge</conditionOperator>
+						<conditionValue>1</conditionValue>
+					</packet>
+				</packets>
+			</parameter>
+		</variables>
+	</parameterGroups>
+</homegearDevice>
+
