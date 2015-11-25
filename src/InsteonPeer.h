@@ -43,7 +43,6 @@ using namespace BaseLib::DeviceDescription;
 namespace Insteon
 {
 class InsteonCentral;
-class InsteonDevice;
 
 class FrameValue
 {
@@ -82,14 +81,12 @@ public:
 	std::shared_ptr<PendingQueues> pendingQueues;
 
 	virtual void worker();
-	virtual std::string handleCLICommand(std::string command);
+	virtual std::string handleCliCommand(std::string command);
 
-	virtual bool load(BaseLib::Systems::LogicalDevice* device);
+	virtual bool load(BaseLib::Systems::ICentral* central);
 	virtual void save(bool savePeer, bool saveVariables, bool saveCentralConfig);
     void serializePeers(std::vector<uint8_t>& encodedData);
     void unserializePeers(std::shared_ptr<std::vector<char>> serializedData);
-    virtual void loadVariables(BaseLib::Systems::LogicalDevice* device = nullptr, std::shared_ptr<BaseLib::Database::DataTable> rows = std::shared_ptr<BaseLib::Database::DataTable>());
-    virtual void saveVariables();
 	virtual void savePeers();
 	void savePendingQueues();
 	bool hasPeers(int32_t channel) { if(_peers.find(channel) == _peers.end() || _peers[channel].empty()) return false; else return true; }
@@ -120,11 +117,13 @@ protected:
 
 	virtual void setPhysicalInterface(std::shared_ptr<IInsteonInterface> interface);
 
-	virtual std::shared_ptr<BaseLib::Systems::Central> getCentral();
-	virtual std::shared_ptr<BaseLib::Systems::LogicalDevice> getDevice(int32_t address);
+	virtual std::shared_ptr<BaseLib::Systems::ICentral> getCentral();
 	void getValuesFromPacket(std::shared_ptr<InsteonPacket> packet, std::vector<FrameValues>& frameValue);
 
 	virtual PParameterGroup getParameterSet(int32_t channel, ParameterGroup::Type::Enum type);
+
+	virtual void loadVariables(BaseLib::Systems::ICentral* central, std::shared_ptr<BaseLib::Database::DataTable>& rows);
+    virtual void saveVariables();
 };
 
 }

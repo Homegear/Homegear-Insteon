@@ -28,12 +28,12 @@
  */
 
 #include "InsteonPeer.h"
-#include "LogicalDevices/InsteonCentral.h"
+#include "InsteonCentral.h"
 #include "GD.h"
 
 namespace Insteon
 {
-std::shared_ptr<BaseLib::Systems::Central> InsteonPeer::getCentral()
+std::shared_ptr<BaseLib::Systems::ICentral> InsteonPeer::getCentral()
 {
 	try
 	{
@@ -53,28 +53,7 @@ std::shared_ptr<BaseLib::Systems::Central> InsteonPeer::getCentral()
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 	}
-	return std::shared_ptr<BaseLib::Systems::Central>();
-}
-
-std::shared_ptr<BaseLib::Systems::LogicalDevice> InsteonPeer::getDevice(int32_t address)
-{
-	try
-	{
-		return GD::family->get(address);
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	return std::shared_ptr<BaseLib::Systems::LogicalDevice>();
+	return std::shared_ptr<BaseLib::Systems::ICentral>();
 }
 
 void InsteonPeer::setPhysicalInterfaceID(std::string id)
@@ -152,7 +131,7 @@ void InsteonPeer::worker()
 	}
 }
 
-std::string InsteonPeer::handleCLICommand(std::string command)
+std::string InsteonPeer::handleCliCommand(std::string command)
 {
 	try
 	{
@@ -367,12 +346,12 @@ void InsteonPeer::save(bool savePeer, bool variables, bool centralConfig)
     }
 }
 
-void InsteonPeer::loadVariables(BaseLib::Systems::LogicalDevice* device, std::shared_ptr<BaseLib::Database::DataTable> rows)
+void InsteonPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared_ptr<BaseLib::Database::DataTable>& rows)
 {
 	try
 	{
 		if(!rows) rows = _bl->db->getPeerVariables(_peerID);
-		Peer::loadVariables(device, rows);
+		Peer::loadVariables(central, rows);
 		_databaseMutex.lock();
 		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
 		{
@@ -382,10 +361,10 @@ void InsteonPeer::loadVariables(BaseLib::Systems::LogicalDevice* device, std::sh
 				unserializePeers(row->second.at(5)->binaryValue);
 				break;
 			case 16:
-				if(_centralFeatures && device)
+				if(_centralFeatures)
 				{
 					pendingQueues.reset(new PendingQueues());
-					pendingQueues->unserialize(row->second.at(5)->binaryValue, this, (InsteonDevice*)device);
+					pendingQueues->unserialize(row->second.at(5)->binaryValue, this);
 				}
 				break;
 			case 19:
@@ -411,11 +390,12 @@ void InsteonPeer::loadVariables(BaseLib::Systems::LogicalDevice* device, std::sh
 	_databaseMutex.unlock();
 }
 
-bool InsteonPeer::load(BaseLib::Systems::LogicalDevice* device)
+bool InsteonPeer::load(BaseLib::Systems::ICentral* central)
 {
 	try
 	{
-		loadVariables(device);
+		std::shared_ptr<BaseLib::Database::DataTable> rows;
+		loadVariables(central, rows);
 
 		_rpcDevice = GD::rpcDevices.find(_deviceType, _firmwareVersion, -1);
 		if(!_rpcDevice)
@@ -535,7 +515,7 @@ void InsteonPeer::serializePeers(std::vector<uint8_t>& encodedData)
 				encoder.encodeInteger(encodedData, (*j)->address);
 				encoder.encodeInteger(encodedData, (*j)->channel);
 				encoder.encodeString(encodedData, (*j)->serialNumber);
-				encoder.encodeBoolean(encodedData, (*j)->hidden);
+				encoder.encodeBoolean(encodedData, (*j)->isVirtual);
 				encoder.encodeString(encodedData, (*j)->linkName);
 				encoder.encodeString(encodedData, (*j)->linkDescription);
 				encoder.encodeInteger(encodedData, (*j)->data.size());
@@ -576,7 +556,7 @@ void InsteonPeer::unserializePeers(std::shared_ptr<std::vector<char>> serialized
 				basicPeer->address = decoder.decodeInteger(*serializedData, position);
 				basicPeer->channel = decoder.decodeInteger(*serializedData, position);
 				basicPeer->serialNumber = decoder.decodeString(*serializedData, position);
-				basicPeer->hidden = decoder.decodeBoolean(*serializedData, position);
+				basicPeer->isVirtual = decoder.decodeBoolean(*serializedData, position);
 				_peers[channel].push_back(basicPeer);
 				basicPeer->linkName = decoder.decodeString(*serializedData, position);
 				basicPeer->linkDescription = decoder.decodeString(*serializedData, position);
@@ -1224,11 +1204,11 @@ PVariable InsteonPeer::setValue(int32_t clientID, uint32_t channel, std::string 
 			queue->push(packet);
 			if(frame->responseType > -1 && frame->responseSubtype > -1)
 			{
-				queue->push(central->getMessages()->find(DIRECTIONIN, frame->responseType, frame->responseSubtype, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+				queue->push(central->getMessages()->find(frame->responseType, frame->responseSubtype, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 			}
 			else
 			{
-				queue->push(central->getMessages()->find(DIRECTIONIN, packet->messageType(), packet->messageSubtype(), InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+				queue->push(central->getMessages()->find(packet->messageType(), packet->messageSubtype(), InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 			}
 			pendingQueues->push(queue);
 			central->enqueuePendingQueues(_address);

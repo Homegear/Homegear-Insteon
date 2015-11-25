@@ -44,7 +44,7 @@ namespace Insteon
 {
 class InsteonPeer;
 class InsteonMessage;
-class InsteonDevice;
+class InsteonCentral;
 class PendingQueues;
 
 enum class QueueEntryType { UNDEFINED, MESSAGE, PACKET };
@@ -107,7 +107,7 @@ class PacketQueue
         bool _workingOnPendingQueue = false;
         int64_t _lastPop = 0;
         uint32_t _resendSleepingTime = 10000;
-        void (InsteonDevice::*_queueProcessed)() = nullptr;
+        void (InsteonCentral::*_queueProcessed)() = nullptr;
         void pushPendingQueue(bool sendImmediately);
         void sleepAndPushPendingQueue();
         void resend(uint32_t threadId);
@@ -122,7 +122,6 @@ class PacketQueue
         uint32_t pendingQueueID = 0;
         std::shared_ptr<int64_t> lastAction;
         bool noSending = false;
-        InsteonDevice* device = nullptr;
         std::shared_ptr<InsteonPeer> peer;
         PacketQueueType getQueueType() { return _queueType; }
         std::list<PacketQueueEntry>* getQueue() { return &_queue; }
@@ -132,7 +131,6 @@ class PacketQueue
         int32_t channel = -1;
 
         void push(std::shared_ptr<InsteonMessage> message, bool forceResend = false);
-        void push(std::shared_ptr<InsteonMessage> message, std::shared_ptr<InsteonPacket> packet, bool forceResend = false);
         void pushFront(std::shared_ptr<InsteonPacket> packet);
         void push(std::shared_ptr<InsteonPacket> packet, bool forceResend = false, bool stealthy = false);
         void push(std::shared_ptr<PendingQueues>& pendingQueues);
@@ -149,7 +147,7 @@ class PacketQueue
         void longKeepAlive();
         void dispose();
         void serialize(std::vector<uint8_t>& encodedData);
-        void unserialize(std::shared_ptr<std::vector<char>> serializedData, InsteonDevice* device, uint32_t position = 0);
+        void unserialize(std::shared_ptr<std::vector<char>> serializedData, uint32_t position = 0);
         uint32_t getResendSleepingTime() { return _resendSleepingTime; }
         void setResendSleepingTime(uint32_t value) { _resendSleepingTime = value; }
 

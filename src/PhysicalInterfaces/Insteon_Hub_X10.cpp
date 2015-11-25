@@ -534,7 +534,7 @@ void InsteonHubX10::doInit()
 
 		if(_stopped) return;
 
-		_centralAddress = GD::family->getCentral()->physicalAddress();
+		_centralAddress = GD::family->getCentral()->getAddress();
 
 		while(!_stopCallbackThread && !_stopped && !_socket->connected())
 		{

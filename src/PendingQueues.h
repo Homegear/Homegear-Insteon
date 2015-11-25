@@ -41,14 +41,12 @@
 
 namespace Insteon
 {
-class InsteonDevice;
-
 class PendingQueues {
 public:
 	PendingQueues();
 	virtual ~PendingQueues() {}
 	void serialize(std::vector<uint8_t>& encodedData);
-	void unserialize(std::shared_ptr<std::vector<char>> serializedData, InsteonPeer* peer, InsteonDevice* device);
+	void unserialize(std::shared_ptr<std::vector<char>> serializedData, InsteonPeer* peer);
 
 	void push(std::shared_ptr<PacketQueue> queue);
 	void pop();

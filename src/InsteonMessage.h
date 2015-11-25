@@ -32,7 +32,6 @@
 
 #include "homegear-base/BaseLib.h"
 #include "InsteonPacket.h"
-#include "InsteonDevice.h"
 
 #include <iostream>
 #include <vector>
@@ -43,21 +42,18 @@
 namespace Insteon
 {
 class PacketQueue;
+class InsteonCentral;
 
 enum MessageAccess { NOACCESS = 0x00, ACCESSPAIREDTOSENDER = 0x01, ACCESSDESTISME = 0x02, ACCESSCENTRAL = 0x04, ACCESSUNPAIRING = 0x08, FULLACCESS = 0x80 };
-enum MessageDirection { DIRECTIONIN, DIRECTIONOUT };
 
 class InsteonMessage
 {
     public:
         InsteonMessage();
-        InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, InsteonDevice* device, int32_t access, void (InsteonDevice::*messageHandlerIncoming)(std::shared_ptr<InsteonPacket>));
-        InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, InsteonDevice* device, int32_t access, int32_t accessPairing, void (InsteonDevice::*messageHandlerIncoming)(std::shared_ptr<InsteonPacket>));
-        InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, InsteonDevice* device, void (InsteonDevice::*messageHandlerOutgoing)(int32_t, std::shared_ptr<InsteonPacket>));
+        InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, int32_t access, void (InsteonCentral::*messageHandler)(std::shared_ptr<InsteonPacket>));
+        InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, int32_t access, int32_t accessPairing, void (InsteonCentral::*messageHandler)(std::shared_ptr<InsteonPacket>));
         virtual ~InsteonMessage();
 
-        MessageDirection getDirection() { return _direction; }
-        void setDirection(MessageDirection direction) { _direction = direction; }
         int32_t getMessageSubtype() { return _messageSubtype; }
         void setMessageSubtype(int32_t messageSubtype) { _messageSubtype = messageSubtype; }
         int32_t getMessageType() { return _messageType; }
@@ -68,9 +64,7 @@ class InsteonMessage
         void setMessageAccess(int32_t access) { _access = access; }
         int32_t getMessageAccessPairing() { return _accessPairing; }
         void setMessageAccessPairing(int32_t accessPairing) { _accessPairing = accessPairing; }
-        InsteonDevice* getDevice() { return _device; }
-        void invokeMessageHandlerIncoming(std::shared_ptr<InsteonPacket> packet);
-        void invokeMessageHandlerOutgoing(std::shared_ptr<InsteonPacket> packet);
+        void invokeMessageHandler(std::shared_ptr<InsteonPacket> packet);
         bool checkAccess(std::shared_ptr<InsteonPacket> packet, std::shared_ptr<PacketQueue> queue);
         std::vector<std::pair<uint32_t, int32_t>>* getSubtypes() { return &_subtypes; }
         void addSubtype(int32_t subtypePosition, int32_t subtype) { _subtypes.push_back(std::pair<uint32_t, int32_t>(subtypePosition, subtype)); };
@@ -81,16 +75,13 @@ class InsteonMessage
         bool typeIsEqual(std::shared_ptr<InsteonMessage> message);
         bool typeIsEqual(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, std::vector<std::pair<uint32_t, int32_t>>* subtypes);
     protected:
-        MessageDirection _direction = DIRECTIONIN;
         int32_t _messageType = -1;
         int32_t _messageSubtype = -1;
         InsteonPacketFlags _messageFlags = InsteonPacketFlags::Direct;
-        InsteonDevice* _device = nullptr;
         int32_t _access = 0;
         int32_t _accessPairing = 0;
         std::vector<std::pair<uint32_t, int32_t>> _subtypes;
-        void (InsteonDevice::*_messageHandlerIncoming)(std::shared_ptr<InsteonPacket>) = nullptr;
-        void (InsteonDevice::*_messageHandlerOutgoing)(int32_t, std::shared_ptr<InsteonPacket>) = nullptr;
+        void (InsteonCentral::*_messageHandler)(std::shared_ptr<InsteonPacket>) = nullptr;
     private:
 };
 }

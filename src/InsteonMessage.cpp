@@ -29,6 +29,7 @@
 
 #include "InsteonMessage.h"
 #include "GD.h"
+#include "InsteonCentral.h"
 
 namespace Insteon
 {
@@ -36,52 +37,25 @@ InsteonMessage::InsteonMessage()
 {
 }
 
-InsteonMessage::InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, InsteonDevice* device, int32_t access, void (InsteonDevice::*messageHandler)(std::shared_ptr<InsteonPacket>)) : _messageType(messageType), _messageSubtype(messageSubtype), _messageFlags(flags), _device(device), _access(access), _messageHandlerIncoming(messageHandler)
+InsteonMessage::InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, int32_t access, void (InsteonCentral::*messageHandler)(std::shared_ptr<InsteonPacket>)) : _messageType(messageType), _messageSubtype(messageSubtype), _messageFlags(flags), _access(access), _messageHandler(messageHandler)
 {
-    _direction = DIRECTIONIN;
 }
 
-InsteonMessage::InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, InsteonDevice* device, int32_t access, int32_t accessPairing, void (InsteonDevice::*messageHandler)(std::shared_ptr<InsteonPacket>)) : _messageType(messageType), _messageSubtype(messageSubtype), _messageFlags(flags), _device(device), _access(access), _accessPairing(accessPairing), _messageHandlerIncoming(messageHandler)
+InsteonMessage::InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, int32_t access, int32_t accessPairing, void (InsteonCentral::*messageHandler)(std::shared_ptr<InsteonPacket>)) : _messageType(messageType), _messageSubtype(messageSubtype), _messageFlags(flags), _access(access), _accessPairing(accessPairing), _messageHandler(messageHandler)
 {
-    _direction = DIRECTIONIN;
-}
-
-InsteonMessage::InsteonMessage(int32_t messageType, int32_t messageSubtype, InsteonPacketFlags flags, InsteonDevice* device, void (InsteonDevice::*messageHandler)(int32_t, std::shared_ptr<InsteonPacket>)) : _messageType(messageType), _messageSubtype(messageSubtype), _messageFlags(flags), _device(device), _messageHandlerOutgoing(messageHandler)
-{
-    _direction = DIRECTIONOUT;
 }
 
 InsteonMessage::~InsteonMessage()
 {
 }
 
-void InsteonMessage::invokeMessageHandlerIncoming(std::shared_ptr<InsteonPacket> packet)
+void InsteonMessage::invokeMessageHandler(std::shared_ptr<InsteonPacket> packet)
 {
 	try
 	{
-		if(_device == nullptr || _messageHandlerIncoming == nullptr || packet == nullptr) return;
-		((_device)->*(_messageHandlerIncoming))(packet);
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-}
-
-void InsteonMessage::invokeMessageHandlerOutgoing(std::shared_ptr<InsteonPacket> packet)
-{
-	try
-	{
-		if(_device == nullptr || _messageHandlerOutgoing == nullptr || packet == nullptr) return;
-		((_device)->*(_messageHandlerOutgoing))(_messageSubtype, packet);
+		std::shared_ptr<InsteonCentral> central(std::dynamic_pointer_cast<InsteonCentral>(GD::family->getCentral()));
+		if(!central || _messageHandler == nullptr || packet == nullptr) return;
+		(central.get()->*(_messageHandler))(packet);
 	}
 	catch(const std::exception& ex)
 	{
@@ -219,13 +193,14 @@ bool InsteonMessage::checkAccess(std::shared_ptr<InsteonPacket> packet, std::sha
 {
 	try
 	{
-		if(_device == nullptr || !packet) return false;
+		std::shared_ptr<InsteonCentral> central(std::dynamic_pointer_cast<InsteonCentral>(GD::family->getCentral()));
+		if(!central || !packet) return false;
 
-		int32_t access = _device->isInPairingMode() ? _accessPairing : _access;
+		int32_t access = central->isInPairingMode() ? _accessPairing : _access;
 		if(access == NOACCESS) return false;
-		if(queue && !queue->isEmpty() && packet->destinationAddress() == _device->getAddress())
+		if(queue && !queue->isEmpty() && packet->destinationAddress() == central->getAddress())
 		{
-			if(!_device->isInPairingMode() && queue->getQueueType() == PacketQueueType::PAIRING) access = _accessPairing;
+			if(!central->isInPairingMode() && queue->getQueueType() == PacketQueueType::PAIRING) access = _accessPairing;
 			if(queue->front()->getType() == QueueEntryType::PACKET)
 			{
 				std::shared_ptr<InsteonPacket> backup = queue->front()->getPacket();
@@ -240,7 +215,7 @@ bool InsteonMessage::checkAccess(std::shared_ptr<InsteonPacket> packet, std::sha
 			}
 		}
 		if(access & FULLACCESS) return true;
-		if((access & ACCESSDESTISME) && packet->destinationAddress() != _device->getAddress())
+		if((access & ACCESSDESTISME) && packet->destinationAddress() != central->getAddress())
 		{
 			//GD::out.printMessage( "Access denied, because the destination address is not me: " << packet->hexString() << std::endl;
 			return false;
@@ -252,11 +227,11 @@ bool InsteonMessage::checkAccess(std::shared_ptr<InsteonPacket> packet, std::sha
 		if(access & ACCESSPAIREDTOSENDER)
 		{
 			std::shared_ptr<InsteonPeer> currentPeer;
-			if(_device->isInPairingMode() && queue && queue->peer && queue->peer->getAddress() == packet->senderAddress()) currentPeer = queue->peer;
-			if(!currentPeer) currentPeer = _device->getPeer(packet->senderAddress());
+			if(central->isInPairingMode() && queue && queue->peer && queue->peer->getAddress() == packet->senderAddress()) currentPeer = queue->peer;
+			if(!currentPeer) currentPeer = central->getPeer(packet->senderAddress());
 			if(!currentPeer) return false;
 		}
-		if((access & ACCESSCENTRAL) && _device->getCentralAddress() != packet->senderAddress())
+		if((access & ACCESSCENTRAL) && central->getCentralAddress() != packet->senderAddress())
 		{
 			//GD::out.printMessage( "Access denied, because it is only granted to a paired central: " << packet->hexString() << std::endl;
 			return false;

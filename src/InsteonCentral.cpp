@@ -28,16 +28,16 @@
  */
 
 #include "InsteonCentral.h"
-#include "../GD.h"
+#include "GD.h"
 
 namespace Insteon {
 
-InsteonCentral::InsteonCentral(IDeviceEventSink* eventHandler) : InsteonDevice(eventHandler), BaseLib::Systems::Central(GD::bl, this)
+InsteonCentral::InsteonCentral(ICentralEventSink* eventHandler) : BaseLib::Systems::ICentral(INSTEON_FAMILY_ID, GD::bl, eventHandler)
 {
 	init();
 }
 
-InsteonCentral::InsteonCentral(uint32_t deviceID, std::string serialNumber, int32_t address, IDeviceEventSink* eventHandler) : InsteonDevice(deviceID, serialNumber, address, eventHandler), Central(GD::bl, this)
+InsteonCentral::InsteonCentral(uint32_t deviceID, std::string serialNumber, int32_t address, ICentralEventSink* eventHandler) : BaseLib::Systems::ICentral(INSTEON_FAMILY_ID, GD::bl, deviceID, serialNumber, address, eventHandler)
 {
 	init();
 }
@@ -45,22 +45,22 @@ InsteonCentral::InsteonCentral(uint32_t deviceID, std::string serialNumber, int3
 InsteonCentral::~InsteonCentral()
 {
 	dispose();
-	_pairingModeThreadMutex.lock();
-	if(_pairingModeThread.joinable())
-	{
-		_stopPairingModeThread = true;
-		_pairingModeThread.join();
-	}
-	_pairingModeThreadMutex.unlock();
 }
 
 void InsteonCentral::init()
 {
 	try
 	{
-		InsteonDevice::init();
+		if(_initialized) return; //Prevent running init two times
+		_initialized = true;
+		_physicalInterface = GD::defaultPhysicalInterface;
 
-		_deviceType = (uint32_t)DeviceType::INSTEONCENTRAL;
+		_messages = std::shared_ptr<InsteonMessages>(new InsteonMessages());
+
+		setUpInsteonMessages();
+
+		_workerThread = std::thread(&InsteonCentral::worker, this);
+		BaseLib::Threads::setThreadPriority(_bl, _workerThread.native_handle(), _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy());
 
 		for(std::map<std::string, std::shared_ptr<IInsteonInterface>>::iterator i = GD::physicalInterfaces.begin(); i != GD::physicalInterfaces.end(); ++i)
 		{
@@ -81,18 +81,94 @@ void InsteonCentral::init()
 	}
 }
 
+void InsteonCentral::dispose(bool wait)
+{
+	try
+	{
+		if(_disposing) return;
+		_disposing = true;
+		GD::out.printDebug("Removing device " + std::to_string(_deviceId) + " from physical device's event queue...");
+		for(std::map<std::string, std::shared_ptr<IInsteonInterface>>::iterator i = GD::physicalInterfaces.begin(); i != GD::physicalInterfaces.end(); ++i)
+		{
+			//Just to make sure cycle through all physical devices. If event handler is not removed => segfault
+			i->second->removeEventHandler(_physicalInterfaceEventhandler);
+		}
+
+		stopThreads();
+
+		_queueManager.dispose(false);
+		_receivedPackets.dispose(false);
+		_sentPackets.dispose(false);
+	}
+    catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+	_disposed = true;
+}
+
+void InsteonCentral::stopThreads()
+{
+	try
+	{
+		_pairingModeThreadMutex.lock();
+		if(_pairingModeThread.joinable())
+		{
+			_stopPairingModeThread = true;
+			_pairingModeThread.join();
+		}
+		_pairingModeThreadMutex.unlock();
+
+		_peersMutex.lock();
+		for(std::unordered_map<int32_t, std::shared_ptr<BaseLib::Systems::Peer>>::const_iterator i = _peers.begin(); i != _peers.end(); ++i)
+		{
+			i->second->dispose();
+		}
+		_peersMutex.unlock();
+
+		_stopWorkerThread = true;
+		if(_workerThread.joinable())
+		{
+			GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
+			_workerThread.join();
+		}
+	}
+    catch(const std::exception& ex)
+    {
+    	_peersMutex.unlock();
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	_peersMutex.unlock();
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	_peersMutex.unlock();
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
 void InsteonCentral::setUpInsteonMessages()
 {
 	try
 	{
-		//Don't call InsteonDevice::setUpInsteonMessages!
-		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x01, -1, InsteonPacketFlags::Broadcast, this, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonDevice::handlePairingRequest)));
+		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x01, -1, InsteonPacketFlags::Broadcast, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonCentral::handlePairingRequest)));
 
-		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x09, 0x01, InsteonPacketFlags::DirectAck, this, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonDevice::handleLinkingModeResponse)));
+		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x09, 0x01, InsteonPacketFlags::DirectAck, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonCentral::handleLinkingModeResponse)));
 
-		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x2F, -1, InsteonPacketFlags::Direct, this, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonDevice::handleDatabaseOpResponse)));
+		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x2F, -1, InsteonPacketFlags::Direct, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonCentral::handleDatabaseOpResponse)));
 
-		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x2F, -1, InsteonPacketFlags::DirectAck, this, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonDevice::handleDatabaseOpResponse)));
+		_messages->add(std::shared_ptr<InsteonMessage>(new InsteonMessage(0x2F, -1, InsteonPacketFlags::DirectAck, ACCESSPAIREDTOSENDER, FULLACCESS, &InsteonCentral::handleDatabaseOpResponse)));
 	}
     catch(const std::exception& ex)
     {
@@ -106,6 +182,42 @@ void InsteonCentral::setUpInsteonMessages()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
+}
+
+std::shared_ptr<IPhysicalInterface> InsteonCentral::getPhysicalInterface(int32_t peerAddress, std::string interfaceID)
+{
+	try
+	{
+		std::shared_ptr<PacketQueue> queue = _queueManager.get(peerAddress, interfaceID);
+		if(queue && queue->getPhysicalInterface()) return queue->getPhysicalInterface();
+		std::shared_ptr<InsteonPeer> peer = getPeer(peerAddress);
+		return peer ? peer->getPhysicalInterface() : GD::defaultPhysicalInterface;
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    return GD::defaultPhysicalInterface;
+}
+
+void InsteonCentral::setPhysicalInterfaceID(std::string id)
+{
+	if(id.empty() || (GD::physicalInterfaces.find(id) != GD::physicalInterfaces.end() && GD::physicalInterfaces.at(id)))
+	{
+		if(_physicalInterface) _physicalInterface->removeEventHandler(_physicalInterfaceEventhandler);
+		_physicalInterfaceID = id;
+		_physicalInterface = id.empty() ? GD::defaultPhysicalInterface : GD::physicalInterfaces.at(_physicalInterfaceID);
+		_physicalInterfaceEventhandler = _physicalInterface->addEventHandler((BaseLib::Systems::IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
+		saveVariable(4, _physicalInterfaceID);
+	}
 }
 
 void InsteonCentral::worker()
@@ -191,6 +303,217 @@ void InsteonCentral::worker()
     }
 }
 
+void InsteonCentral::loadPeers()
+{
+	try
+	{
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getPeers(_deviceId);
+		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
+		{
+			int32_t peerID = row->second.at(0)->intValue;
+			GD::out.printMessage("Loading peer " + std::to_string(peerID));
+			int32_t address = row->second.at(2)->intValue;
+			std::shared_ptr<InsteonPeer> peer(new InsteonPeer(peerID, address, row->second.at(3)->textValue, _deviceId, true, this));
+			if(!peer->load(this)) continue;
+			if(!peer->getRpcDevice()) continue;
+			_peersMutex.lock();
+			_peers[peer->getAddress()] = peer;
+			if(!peer->getSerialNumber().empty()) _peersBySerial[peer->getSerialNumber()] = peer;
+			_peersById[peerID] = peer;
+			_peersMutex.unlock();
+			peer->getPhysicalInterface()->addPeer(peer->getAddress());
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    	_peersMutex.unlock();
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    	_peersMutex.unlock();
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    	_peersMutex.unlock();
+    }
+}
+
+void InsteonCentral::loadVariables()
+{
+	try
+	{
+		std::shared_ptr<BaseLib::Database::DataTable> rows = _bl->db->getDeviceVariables(_deviceId);
+		for(BaseLib::Database::DataTable::iterator row = rows->begin(); row != rows->end(); ++row)
+		{
+			_variableDatabaseIds[row->second.at(2)->intValue] = row->second.at(0)->intValue;
+			switch(row->second.at(2)->intValue)
+			{
+			case 0:
+				_firmwareVersion = row->second.at(3)->intValue;
+				break;
+			case 1:
+				_centralAddress = row->second.at(3)->intValue;
+				break;
+			case 4:
+				_physicalInterfaceID = row->second.at(4)->textValue;
+				if(!_physicalInterfaceID.empty() && GD::physicalInterfaces.find(_physicalInterfaceID) != GD::physicalInterfaces.end()) _physicalInterface = GD::physicalInterfaces.at(_physicalInterfaceID);
+				break;
+			}
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+void InsteonCentral::savePeers(bool full)
+{
+	try
+	{
+		_peersMutex.lock();
+		for(std::unordered_map<int32_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peers.begin(); i != _peers.end(); ++i)
+		{
+			//Necessary, because peers can be assigned to multiple virtual devices
+			if(i->second->getParentID() != _deviceId) continue;
+			//We are always printing this, because the init script needs it
+			GD::out.printMessage("(Shutdown) => Saving peer " + std::to_string(i->second->getID()));
+			i->second->save(full, full, full);
+		}
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+	_peersMutex.unlock();
+}
+
+void InsteonCentral::saveVariables()
+{
+	try
+	{
+		if(_deviceId == 0) return;
+		saveVariable(0, _firmwareVersion);
+		saveVariable(1, _centralAddress);
+		saveVariable(4, _physicalInterfaceID);
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
+std::shared_ptr<InsteonPeer> InsteonCentral::getPeer(int32_t address)
+{
+	try
+	{
+		_peersMutex.lock();
+		if(_peers.find(address) != _peers.end())
+		{
+			std::shared_ptr<InsteonPeer> peer(std::dynamic_pointer_cast<InsteonPeer>(_peers.at(address)));
+			_peersMutex.unlock();
+			return peer;
+		}
+	}
+	catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    _peersMutex.unlock();
+    return std::shared_ptr<InsteonPeer>();
+}
+
+std::shared_ptr<InsteonPeer> InsteonCentral::getPeer(uint64_t id)
+{
+	try
+	{
+		_peersMutex.lock();
+		if(_peersById.find(id) != _peersById.end())
+		{
+			std::shared_ptr<InsteonPeer> peer(std::dynamic_pointer_cast<InsteonPeer>(_peersById.at(id)));
+			_peersMutex.unlock();
+			return peer;
+		}
+	}
+	catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    _peersMutex.unlock();
+    return std::shared_ptr<InsteonPeer>();
+}
+
+std::shared_ptr<InsteonPeer> InsteonCentral::getPeer(std::string serialNumber)
+{
+	try
+	{
+		_peersMutex.lock();
+		if(_peersBySerial.find(serialNumber) != _peersBySerial.end())
+		{
+			std::shared_ptr<InsteonPeer> peer(std::dynamic_pointer_cast<InsteonPeer>(_peersBySerial.at(serialNumber)));
+			_peersMutex.unlock();
+			return peer;
+		}
+	}
+	catch(const std::exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+    _peersMutex.unlock();
+    return std::shared_ptr<InsteonPeer>();
+}
+
 bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<BaseLib::Systems::Packet> packet)
 {
 	try
@@ -198,6 +521,7 @@ bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
 		if(_disposing) return false;
 		std::shared_ptr<InsteonPacket> insteonPacket(std::dynamic_pointer_cast<InsteonPacket>(packet));
 		if(!insteonPacket) return false;
+		if(GD::bl->debugLevel >= 4) std::cout << BaseLib::HelperFunctions::getTimeString(insteonPacket->timeReceived()) << " Insteon packet received: " + insteonPacket->hexString() << std::endl;
 		if(insteonPacket->senderAddress() == _address) //Packet spoofed
 		{
 			std::shared_ptr<InsteonPeer> peer(getPeer(insteonPacket->destinationAddress()));
@@ -216,7 +540,33 @@ bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
 		std::shared_ptr<IPhysicalInterface> physicalInterface = getPhysicalInterface(insteonPacket->senderAddress(), insteonPacket->interfaceID());
 		//Allow pairing packets from all interfaces when pairing mode is enabled.
 		if(!(_pairing && insteonPacket->messageType() == 0x01) && physicalInterface->getID() != senderID) return true;
-		bool handled = InsteonDevice::onPacketReceived(senderID, insteonPacket);
+
+		bool handled = false;
+		if(_receivedPackets.set(insteonPacket->senderAddress(), insteonPacket, insteonPacket->timeReceived())) handled = true;
+		if(insteonPacket->flags() == InsteonPacketFlags::DirectNak || insteonPacket->flags() == InsteonPacketFlags::GroupCleanupDirectNak)
+		{
+			handleNak(insteonPacket);
+			handled =  true;
+		}
+		else
+		{
+			std::shared_ptr<InsteonMessage> message = _messages->find(insteonPacket);
+			if(message)
+			{
+				if(message->checkAccess(insteonPacket, _queueManager.get(insteonPacket->senderAddress(), senderID)))
+				{
+					if(_bl->debugLevel >= 5) GD::out.printDebug("Debug: Device " + std::to_string(_deviceId) + ": Access granted for packet " + insteonPacket->hexString());
+					message->invokeMessageHandler(insteonPacket);
+					handled =  true;
+				}
+				else if(_bl->debugLevel >= 5) GD::out.printDebug("Debug: Device " + std::to_string(_deviceId) + ": Access rejected for packet " + insteonPacket->hexString());
+			}
+			else
+			{
+				handleAck(insteonPacket);
+			}
+		}
+
 		std::shared_ptr<InsteonPeer> peer(getPeer(insteonPacket->senderAddress()));
 		if(!peer) return false;
 		std::shared_ptr<InsteonPeer> team;
@@ -248,6 +598,57 @@ bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
     return false;
 }
 
+void InsteonCentral::sendPacket(std::shared_ptr<IPhysicalInterface> physicalInterface, std::shared_ptr<InsteonPacket> packet, bool stealthy)
+{
+	try
+	{
+		if(!packet || !physicalInterface) return;
+		uint32_t responseDelay = physicalInterface->responseDelay();
+		std::shared_ptr<InsteonPacketInfo> packetInfo = _sentPackets.getInfo(packet->destinationAddress());
+		if(!stealthy) _sentPackets.set(packet->destinationAddress(), packet);
+		if(packetInfo)
+		{
+			int64_t timeDifference = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - packetInfo->time;
+			if(timeDifference < responseDelay)
+			{
+				packetInfo->time += responseDelay - timeDifference; //Set to sending time
+				std::this_thread::sleep_for(std::chrono::milliseconds(responseDelay - timeDifference));
+			}
+		}
+		if(stealthy) _sentPackets.keepAlive(packet->destinationAddress());
+		packetInfo = _receivedPackets.getInfo(packet->destinationAddress());
+		if(packetInfo)
+		{
+			int64_t time = BaseLib::HelperFunctions::getTime();
+			int64_t timeDifference = time - packetInfo->time;
+			if(timeDifference >= 0 && timeDifference < responseDelay)
+			{
+				int64_t sleepingTime = responseDelay - timeDifference;
+				if(sleepingTime > 1) sleepingTime -= 1;
+				packet->setTimeSending(time + sleepingTime + 1);
+				std::this_thread::sleep_for(std::chrono::milliseconds(sleepingTime));
+			}
+			//Set time to now. This is necessary if two packets are sent after each other without a response in between
+			packetInfo->time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			_receivedPackets.deletePacket(packet->destinationAddress(), packetInfo->id, true);
+		}
+		else if(_bl->debugLevel > 4) GD::out.printDebug("Debug: Sending packet " + packet->hexString() + " immediately, because it seems it is no response (no packet information found).", 7);
+		physicalInterface->sendPacket(packet);
+	}
+	catch(const std::exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(BaseLib::Exception& ex)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
+    }
+    catch(...)
+    {
+    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+    }
+}
+
 void InsteonCentral::unpair(uint64_t id)
 {
 	try
@@ -258,7 +659,7 @@ void InsteonCentral::unpair(uint64_t id)
 		while(!peer->pendingQueues->empty()) peer->pendingQueues->pop();
 		peer->serviceMessages->setConfigPending(true);
 
-		std::shared_ptr<PacketQueue> queue = _queueManager.createQueue(this, getPhysicalInterface(peer->getAddress()), PacketQueueType::UNPAIRING, peer->getAddress());
+		std::shared_ptr<PacketQueue> queue = _queueManager.createQueue(getPhysicalInterface(peer->getAddress()), PacketQueueType::UNPAIRING, peer->getAddress());
 		queue->peer = peer;
 
 		peer->getPhysicalInterface()->removePeer(peer->getAddress());
@@ -280,7 +681,7 @@ void InsteonCentral::unpair(uint64_t id)
 		payload.push_back(0xC1); //Always the same checksum, so we don't calculate to safe ressources
 		std::shared_ptr<InsteonPacket> configPacket(new InsteonPacket(0x2F, 0, peer->getAddress(), 3, 3, InsteonPacketFlags::Direct, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(0); //Write
@@ -299,7 +700,7 @@ void InsteonCentral::unpair(uint64_t id)
 		payload.push_back(0xB9); //Always the same checksum, so we don't calculate to safe ressources
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, peer->getAddress(), 3, 3, InsteonPacketFlags::Direct, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 	}
 	catch(const std::exception& ex)
     {
@@ -339,7 +740,7 @@ void InsteonCentral::deletePeer(uint64_t id)
 		raiseRPCDeleteDevices(deviceAddresses, deviceInfo);
 		_peersMutex.lock();
 		if(_peersBySerial.find(peer->getSerialNumber()) != _peersBySerial.end()) _peersBySerial.erase(peer->getSerialNumber());
-		if(_peersByID.find(id) != _peersByID.end()) _peersByID.erase(id);
+		if(_peersById.find(id) != _peersById.end()) _peersById.erase(id);
 		if(_peers.find(peer->getAddress()) != _peers.end()) _peers.erase(peer->getAddress());
 		_peersMutex.unlock();
 		peer->deleteFromDatabase();
@@ -362,7 +763,7 @@ void InsteonCentral::deletePeer(uint64_t id)
     }
 }
 
-std::string InsteonCentral::handleCLICommand(std::string command)
+std::string InsteonCentral::handleCliCommand(std::string command)
 {
 	try
 	{
@@ -374,7 +775,7 @@ std::string InsteonCentral::handleCLICommand(std::string command)
 				_currentPeer.reset();
 				return "Peer unselected.\n";
 			}
-			return _currentPeer->handleCLICommand(command);
+			return _currentPeer->handleCliCommand(command);
 		}
 		if(command == "help" || command == "h")
 		{
@@ -635,7 +1036,7 @@ std::string InsteonCentral::handleCLICommand(std::string command)
 					<< std::setw(unreachWidth) << " "
 					<< std::endl;
 				_peersMutex.lock();
-				for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersByID.begin(); i != _peersByID.end(); ++i)
+				for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersById.begin(); i != _peersById.end(); ++i)
 				{
 					if(filterType == "id")
 					{
@@ -847,7 +1248,7 @@ void InsteonCentral::enqueuePendingQueues(int32_t deviceAddress)
 			return;
 		}
 		std::shared_ptr<PacketQueue> queue = _queueManager.get(deviceAddress, peer->getPhysicalInterfaceID());
-		if(!queue) queue = _queueManager.createQueue(this, peer->getPhysicalInterface(), PacketQueueType::DEFAULT, deviceAddress);
+		if(!queue) queue = _queueManager.createQueue(peer->getPhysicalInterface(), PacketQueueType::DEFAULT, deviceAddress);
 		if(!queue)
 		{
 			_enqueuePendingQueuesMutex.unlock();
@@ -875,7 +1276,7 @@ std::shared_ptr<InsteonPeer> InsteonCentral::createPeer(int32_t address, int32_t
 {
 	try
 	{
-		std::shared_ptr<InsteonPeer> peer(new InsteonPeer(_deviceID, true, this));
+		std::shared_ptr<InsteonPeer> peer(new InsteonPeer(_deviceId, true, this));
 		peer->setAddress(address);
 		peer->setFirmwareVersion(firmwareVersion);
 		peer->setDeviceType(deviceType);
@@ -898,61 +1299,6 @@ std::shared_ptr<InsteonPeer> InsteonCentral::createPeer(int32_t address, int32_t
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
     return std::shared_ptr<InsteonPeer>();
-}
-
-bool InsteonCentral::knowsDevice(std::string serialNumber)
-{
-	if(serialNumber == _serialNumber) return true;
-	_peersMutex.lock();
-	try
-	{
-		if(_peersBySerial.find(serialNumber) != _peersBySerial.end())
-		{
-			_peersMutex.unlock();
-			return true;
-		}
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	_peersMutex.unlock();
-	return false;
-}
-
-bool InsteonCentral::knowsDevice(uint64_t id)
-{
-	_peersMutex.lock();
-	try
-	{
-		if(_peersByID.find(id) != _peersByID.end())
-		{
-			_peersMutex.unlock();
-			return true;
-		}
-	}
-	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(...)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-	}
-	_peersMutex.unlock();
-	return false;
 }
 
 void InsteonCentral::addHomegearFeatures(std::shared_ptr<InsteonPeer> peer)
@@ -983,7 +1329,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		std::shared_ptr<IInsteonInterface> interface = (GD::physicalInterfaces.find(interfaceID) == GD::physicalInterfaces.end()) ? GD::defaultPhysicalInterface : GD::physicalInterfaces.at(interfaceID);
 		_abortPairingModeThread = true;
 		disablePairingMode(interface->getID());
-		std::shared_ptr<PacketQueue> queue = _queueManager.createQueue(this, interface, PacketQueueType::PAIRING, address);
+		std::shared_ptr<PacketQueue> queue = _queueManager.createQueue(interface, PacketQueueType::PAIRING, address);
 		queue->peer = peer;
 
 		std::vector<uint8_t> payload;
@@ -1003,7 +1349,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0); //Needs to be "0"!
 		std::shared_ptr<InsteonPacket> configPacket(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::DirectAck, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, -1, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, -1, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(0);
@@ -1022,8 +1368,8 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0xF6); //Always the same checksum, so we don't calculate to safe ressources
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x09, 0x01, address, 3, 3, InsteonPacketFlags::DirectAck, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x09, 0x01, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
-		queue->push(_messages->find(DIRECTIONIN, 0x01, -1, InsteonPacketFlags::Broadcast, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x09, 0x01, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x01, -1, InsteonPacketFlags::Broadcast, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(1); //Read
@@ -1042,7 +1388,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0); //Needs to be "0"!
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::DirectAck, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(0); //Write
@@ -1060,7 +1406,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0x01); //Data3
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::Direct, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(1); //Read
@@ -1079,7 +1425,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0); //Needs to be "0"!
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::DirectAck, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(1); //Read
@@ -1098,7 +1444,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0); //Needs to be "0"!
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::DirectAck, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(0); //Write
@@ -1116,7 +1462,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0x01); //Data3
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::Direct, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 
 		payload.push_back(1); //Read
@@ -1135,7 +1481,7 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 		payload.push_back(0); //Needs to be "0"!
 		configPacket = std::shared_ptr<InsteonPacket>(new InsteonPacket(0x2F, 0, address, 3, 3, InsteonPacketFlags::DirectAck, payload));
 		queue->push(configPacket);
-		queue->push(_messages->find(DIRECTIONIN, 0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
+		queue->push(_messages->find(0x2F, 0, InsteonPacketFlags::Direct, std::vector<std::pair<uint32_t, int32_t>>()));
 		payload.clear();
 	}
 	catch(const std::exception& ex)
@@ -1339,7 +1685,7 @@ void InsteonCentral::addPeer(std::shared_ptr<InsteonPeer> peer)
 			peer->save(true, true, false);
 			peer->initializeCentralConfig();
 			_peersMutex.lock();
-			_peersByID[peer->getID()] = peer;
+			_peersById[peer->getID()] = peer;
 			_peersMutex.unlock();
 		}
 		catch(const std::exception& ex)
@@ -1695,7 +2041,7 @@ PVariable InsteonCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
 			std::vector<std::shared_ptr<InsteonPeer>> peers;
 			//Copy all peers first, because listDevices takes very long and we don't want to lock _peersMutex too long
 			_peersMutex.lock();
-			for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersByID.begin(); i != _peersByID.end(); ++i)
+			for(std::map<uint64_t, std::shared_ptr<BaseLib::Systems::Peer>>::iterator i = _peersById.begin(); i != _peersById.end(); ++i)
 			{
 				peers.push_back(std::dynamic_pointer_cast<InsteonPeer>(i->second));
 			}

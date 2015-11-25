@@ -36,7 +36,6 @@ using namespace BaseLib;
 
 namespace Insteon
 {
-class InsteonDevice;
 class InsteonCentral;
 
 class Insteon : public BaseLib::Systems::DeviceFamily
@@ -48,20 +47,13 @@ public:
 	virtual void dispose();
 
 	virtual void load();
-	virtual std::shared_ptr<InsteonDevice> getDevice(uint32_t address);
-	virtual std::shared_ptr<InsteonDevice> getDevice(std::string serialNumber);
-	virtual std::shared_ptr<BaseLib::Systems::Central> getCentral();
-	virtual std::string handleCLICommand(std::string& command);
+	virtual std::shared_ptr<BaseLib::Systems::ICentral> getCentral();
+	virtual std::string handleCliCommand(std::string& command);
 	virtual PVariable getPairingMethods();
 private:
-	std::shared_ptr<InsteonCentral> _central;
-
 	void createCentral();
-	void createSpyDevice();
-	uint32_t getUniqueAddress(uint32_t seed);
-	std::string getUniqueSerialNumber(std::string seedPrefix, uint32_t seedNumber);
 };
 
 }
 
-#endif /* INSTEON_H_ */
+#endif
