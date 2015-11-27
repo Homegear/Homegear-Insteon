@@ -112,7 +112,6 @@ void InsteonCentral::dispose(bool wait)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
-	_disposed = true;
 }
 
 void InsteonCentral::stopThreads()

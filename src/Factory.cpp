@@ -29,6 +29,7 @@
 
 #include "Factory.h"
 #include "../config.h"
+#include "GD.h"
 
 BaseLib::Systems::DeviceFamily* InsteonFactory::createDeviceFamily(BaseLib::Obj* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler)
 {
@@ -38,6 +39,11 @@ BaseLib::Systems::DeviceFamily* InsteonFactory::createDeviceFamily(BaseLib::Obj*
 std::string getVersion()
 {
 	return VERSION;
+}
+
+int32_t getFamilyId()
+{
+	return INSTEON_FAMILY_ID;
 }
 
 BaseLib::Systems::SystemFactory* getFactory()
