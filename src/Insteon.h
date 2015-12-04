@@ -43,7 +43,6 @@ class Insteon : public BaseLib::Systems::DeviceFamily
 public:
 	Insteon(BaseLib::Obj* bl, IFamilyEventSink* eventHandler);
 	virtual ~Insteon();
-	virtual bool init();
 	virtual void dispose();
 
 	virtual PVariable getPairingMethods();

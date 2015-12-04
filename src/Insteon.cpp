@@ -42,21 +42,12 @@ Insteon::Insteon(BaseLib::Obj* bl, IFamilyEventSink* eventHandler) : BaseLib::Sy
 	GD::out.init(bl);
 	GD::out.setPrefix("Module Insteon: ");
 	GD::out.printDebug("Debug: Loading module...");
-	GD::rpcDevices.init(_bl, this);
 	_physicalInterfaces.reset(new Interfaces(bl, _settings->getPhysicalInterfaceSettings()));
 }
 
 Insteon::~Insteon()
 {
 
-}
-
-bool Insteon::init()
-{
-	GD::out.printInfo("Loading XML RPC devices...");
-	GD::rpcDevices.load();
-	if(GD::rpcDevices.empty()) return false;
-	return true;
 }
 
 void Insteon::dispose()
@@ -66,7 +57,6 @@ void Insteon::dispose()
 
 	GD::physicalInterfaces.clear();
 	GD::defaultPhysicalInterface.reset();
-	GD::rpcDevices.clear();
 }
 
 std::shared_ptr<BaseLib::Systems::ICentral> Insteon::initializeCentral(uint32_t deviceId, int32_t address, std::string serialNumber)

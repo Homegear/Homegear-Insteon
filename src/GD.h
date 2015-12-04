@@ -51,7 +51,6 @@ public:
 	static Insteon* family;
 	static std::map<std::string, std::shared_ptr<IInsteonInterface>> physicalInterfaces;
 	static std::shared_ptr<IInsteonInterface> defaultPhysicalInterface;
-	static BaseLib::DeviceDescription::Devices rpcDevices;
 	static BaseLib::Output out;
 private:
 	GD();

@@ -1280,7 +1280,7 @@ std::shared_ptr<InsteonPeer> InsteonCentral::createPeer(int32_t address, int32_t
 		peer->setFirmwareVersion(firmwareVersion);
 		peer->setDeviceType(deviceType);
 		peer->setSerialNumber(serialNumber);
-		peer->setRpcDevice(GD::rpcDevices.find(deviceType, firmwareVersion, -1));
+		peer->setRpcDevice(GD::family->getRpcDevices()->find(deviceType, firmwareVersion, -1));
 		if(!peer->getRpcDevice()) return std::shared_ptr<InsteonPeer>();
 		if(save) peer->save(true, true, false); //Save and create peerID
 		return peer;
