@@ -821,7 +821,7 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 				index++;
 			}
 
-			setInstallMode(-1, true, duration, false);
+			setInstallMode(nullptr, true, duration, false);
 			stringStream << "Pairing mode enabled." << std::endl;
 			return stringStream.str();
 		}
@@ -852,7 +852,7 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 				index++;
 			}
 
-			setInstallMode(-1, false, -1, false);
+			setInstallMode(nullptr, false, -1, false);
 			stringStream << "Pairing mode disabled." << std::endl;
 			return stringStream.str();
 		}
@@ -1704,7 +1704,7 @@ void InsteonCentral::addPeer(std::shared_ptr<InsteonPeer> peer)
 		}
 		peer->getPhysicalInterface()->addPeer(peer->getAddress());
 		PVariable deviceDescriptions(new Variable(VariableType::tArray));
-		deviceDescriptions->arrayValue = peer->getDeviceDescriptions(-1, true, std::map<std::string, bool>());
+		deviceDescriptions->arrayValue = peer->getDeviceDescriptions(nullptr, true, std::map<std::string, bool>());
 		raiseRPCNewDevices(deviceDescriptions);
 		GD::out.printMessage("Added peer 0x" + BaseLib::HelperFunctions::getHexString(peer->getAddress()) + ".");
 		addHomegearFeatures(peer);
@@ -1915,7 +1915,7 @@ void InsteonCentral::handlePairingRequest(std::shared_ptr<InsteonPacket> packet)
 //End packet handlers
 
 //RPC functions
-PVariable InsteonCentral::addDevice(int32_t clientID, std::string serialNumber)
+PVariable InsteonCentral::addDevice(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber)
 {
 	try
 	{
@@ -1926,7 +1926,7 @@ PVariable InsteonCentral::addDevice(int32_t clientID, std::string serialNumber)
 		BaseLib::HelperFunctions::toUpper(serialNumber);
 
 		std::shared_ptr<InsteonPeer> peer(getPeer(serialNumber));
-		if(peer) return peer->getDeviceDescription(clientID, -1, std::map<std::string, bool>());
+		if(peer) return peer->getDeviceDescription(clientInfo, -1, std::map<std::string, bool>());
 
 		int32_t address = BaseLib::Math::getNumber(serialNumber, true);
 		for(std::map<std::string, std::shared_ptr<IInsteonInterface>>::iterator i = GD::physicalInterfaces.begin(); i != GD::physicalInterfaces.end(); i++)
@@ -1951,7 +1951,7 @@ PVariable InsteonCentral::addDevice(int32_t clientID, std::string serialNumber)
 	return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::deleteDevice(int32_t clientID, std::string serialNumber, int32_t flags)
+PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber, int32_t flags)
 {
 	try
 	{
@@ -1959,7 +1959,7 @@ PVariable InsteonCentral::deleteDevice(int32_t clientID, std::string serialNumbe
 		if(serialNumber[0] == '*') return Variable::createError(-2, "Cannot delete virtual device.");
 		std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber);
 		if(!peer) return PVariable(new Variable(VariableType::tVoid));
-		return deleteDevice(clientID, peer->getID(), flags);
+		return deleteDevice(clientInfo, peer->getID(), flags);
 	}
 	catch(const std::exception& ex)
     {
@@ -1976,7 +1976,7 @@ PVariable InsteonCentral::deleteDevice(int32_t clientID, std::string serialNumbe
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::deleteDevice(int32_t clientID, uint64_t peerID, int32_t flags)
+PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t flags)
 {
 	try
 	{
@@ -2022,7 +2022,7 @@ PVariable InsteonCentral::deleteDevice(int32_t clientID, uint64_t peerID, int32_
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<std::string, bool> fields)
+PVariable InsteonCentral::getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, uint64_t id, std::map<std::string, bool> fields)
 {
 	try
 	{
@@ -2031,7 +2031,7 @@ PVariable InsteonCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
 			std::shared_ptr<InsteonPeer> peer(getPeer(id));
 			if(!peer) return Variable::createError(-2, "Unknown device.");
 
-			return peer->getDeviceInfo(clientID, fields);
+			return peer->getDeviceInfo(clientInfo, fields);
 		}
 		else
 		{
@@ -2050,7 +2050,7 @@ PVariable InsteonCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
 			{
 				//listDevices really needs a lot of resources, so wait a little bit after each device
 				std::this_thread::sleep_for(std::chrono::milliseconds(3));
-				PVariable info = (*i)->getDeviceInfo(clientID, fields);
+				PVariable info = (*i)->getDeviceInfo(clientInfo, fields);
 				if(!info) continue;
 				array->arrayValue->push_back(info);
 			}
@@ -2076,7 +2076,7 @@ PVariable InsteonCentral::getDeviceInfo(int32_t clientID, uint64_t id, std::map<
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-std::shared_ptr<Variable> InsteonCentral::getInstallMode(int32_t clientID)
+std::shared_ptr<Variable> InsteonCentral::getInstallMode(BaseLib::PRpcClientInfo clientInfo)
 {
 	try
 	{
@@ -2097,7 +2097,7 @@ std::shared_ptr<Variable> InsteonCentral::getInstallMode(int32_t clientID)
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::putParamset(int32_t clientID, std::string serialNumber, int32_t channel, ParameterGroup::Type::Enum type, std::string remoteSerialNumber, int32_t remoteChannel, PVariable paramset)
+PVariable InsteonCentral::putParamset(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber, int32_t channel, ParameterGroup::Type::Enum type, std::string remoteSerialNumber, int32_t remoteChannel, PVariable paramset)
 {
 	try
 	{
@@ -2113,7 +2113,7 @@ PVariable InsteonCentral::putParamset(int32_t clientID, std::string serialNumber
 			}
 			else remoteID = remotePeer->getID();
 		}
-		PVariable result = peer->putParamset(clientID, channel, type, remoteID, remoteChannel, paramset);
+		PVariable result = peer->putParamset(clientInfo, channel, type, remoteID, remoteChannel, paramset);
 		if(result->errorStruct) return result;
 		int32_t waitIndex = 0;
 		while(_queueManager.get(peer->getAddress(), peer->getPhysicalInterfaceID()) && waitIndex < 40)
@@ -2138,13 +2138,13 @@ PVariable InsteonCentral::putParamset(int32_t clientID, std::string serialNumber
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::putParamset(int32_t clientID, uint64_t peerID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable paramset)
+PVariable InsteonCentral::putParamset(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable paramset)
 {
 	try
 	{
 		std::shared_ptr<InsteonPeer> peer(getPeer(peerID));
 		if(!peer) return Variable::createError(-2, "Unknown device.");
-		PVariable result = peer->putParamset(clientID, channel, type, remoteID, remoteChannel, paramset);
+		PVariable result = peer->putParamset(clientInfo, channel, type, remoteID, remoteChannel, paramset);
 		if(result->errorStruct) return result;
 		int32_t waitIndex = 0;
 		while(_queueManager.get(peer->getAddress(), peer->getPhysicalInterfaceID()) && waitIndex < 40)
@@ -2201,7 +2201,7 @@ void InsteonCentral::pairingModeTimer(int32_t duration, bool debugOutput)
     }
 }
 
-std::shared_ptr<Variable> InsteonCentral::setInstallMode(int32_t clientID, bool on, uint32_t duration, bool debugOutput)
+std::shared_ptr<Variable> InsteonCentral::setInstallMode(BaseLib::PRpcClientInfo clientInfo, bool on, uint32_t duration, bool debugOutput)
 {
 	try
 	{

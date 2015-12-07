@@ -826,11 +826,11 @@ std::string InsteonPeer::getFirmwareVersionString(int32_t firmwareVersion)
 }
 
 //RPC Methods
-PVariable InsteonPeer::getDeviceInfo(int32_t clientID, std::map<std::string, bool> fields)
+PVariable InsteonPeer::getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, std::map<std::string, bool> fields)
 {
 	try
 	{
-		PVariable info(Peer::getDeviceInfo(clientID, fields));
+		PVariable info(Peer::getDeviceInfo(clientInfo, fields));
 		if(info->errorStruct) return info;
 
 		if(fields.empty() || fields.find("INTERFACE") != fields.end()) info->structValue->insert(StructElement("INTERFACE", PVariable(new Variable(_physicalInterface->getID()))));
@@ -852,7 +852,7 @@ PVariable InsteonPeer::getDeviceInfo(int32_t clientID, std::map<std::string, boo
     return PVariable();
 }
 
-PVariable InsteonPeer::getParamset(int32_t clientID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
+PVariable InsteonPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
 {
 	try
 	{
@@ -904,7 +904,7 @@ PVariable InsteonPeer::getParamset(int32_t clientID, int32_t channel, ParameterG
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonPeer::getParamsetDescription(int32_t clientID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
+PVariable InsteonPeer::getParamsetDescription(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel)
 {
 	try
 	{
@@ -920,7 +920,7 @@ PVariable InsteonPeer::getParamsetDescription(int32_t clientID, int32_t channel,
 			if(!remotePeer) return Variable::createError(-2, "Unknown remote peer.");
 		}
 
-		return Peer::getParamsetDescription(clientID, parameterGroup);
+		return Peer::getParamsetDescription(clientInfo, parameterGroup);
 	}
 	catch(const std::exception& ex)
     {
@@ -937,7 +937,7 @@ PVariable InsteonPeer::getParamsetDescription(int32_t clientID, int32_t channel,
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonPeer::putParamset(int32_t clientID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable variables, bool onlyPushing)
+PVariable InsteonPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable variables, bool onlyPushing)
 {
 	try
 	{
@@ -955,7 +955,7 @@ PVariable InsteonPeer::putParamset(int32_t clientID, int32_t channel, ParameterG
 			for(Struct::iterator i = variables->structValue->begin(); i != variables->structValue->end(); ++i)
 			{
 				if(i->first.empty() || !i->second) continue;
-				setValue(clientID, channel, i->first, i->second);
+				setValue(clientInfo, channel, i->first, i->second);
 			}
 		}
 		else
@@ -979,7 +979,7 @@ PVariable InsteonPeer::putParamset(int32_t clientID, int32_t channel, ParameterG
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonPeer::setInterface(int32_t clientID, std::string interfaceID)
+PVariable InsteonPeer::setInterface(BaseLib::PRpcClientInfo clientInfo, std::string interfaceID)
 {
 	try
 	{
@@ -1006,11 +1006,11 @@ PVariable InsteonPeer::setInterface(int32_t clientID, std::string interfaceID)
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonPeer::setValue(int32_t clientID, uint32_t channel, std::string valueKey, PVariable value)
+PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t channel, std::string valueKey, PVariable value)
 {
 	try
 	{
-		Peer::setValue(clientID, channel, valueKey, value); //Ignore result, otherwise setHomegerValue might not be executed
+		Peer::setValue(clientInfo, channel, valueKey, value); //Ignore result, otherwise setHomegerValue might not be executed
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
 		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(valueKey.empty()) return Variable::createError(-5, "Value key is empty.");
@@ -1065,7 +1065,7 @@ PVariable InsteonPeer::setValue(int32_t clientID, uint32_t channel, std::string 
 				toggleValue = toggleParam->rpcParameter->convertFromPacket(temp);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
-			return setValue(clientID, channel, toggleCast->parameter, toggleValue);
+			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue);
 		}
 
 		std::vector<uint8_t> physicalValue;

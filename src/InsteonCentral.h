@@ -92,14 +92,14 @@ public:
 	virtual void handleLinkingModeResponse(std::shared_ptr<InsteonPacket> packet);
 	virtual void handlePairingRequest(std::shared_ptr<InsteonPacket> packet);
 
-	virtual PVariable addDevice(int32_t clientID, std::string serialNumber);
-	virtual PVariable deleteDevice(int32_t clientID, std::string serialNumber, int32_t flags);
-	virtual PVariable deleteDevice(int32_t clientID, uint64_t peerID, int32_t flags);
-	virtual PVariable getDeviceInfo(int32_t clientID, uint64_t id, std::map<std::string, bool> fields);
-	virtual PVariable getInstallMode(int32_t clientID);
-	virtual PVariable putParamset(int32_t clientID, std::string serialNumber, int32_t channel, ParameterGroup::Type::Enum type, std::string remoteSerialNumber, int32_t remoteChannel, PVariable paramset);
-	virtual PVariable putParamset(int32_t clientID, uint64_t peerID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable paramset);
-	virtual PVariable setInstallMode(int32_t clientID, bool on, uint32_t duration = 60, bool debugOutput = true);
+	virtual PVariable addDevice(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber);
+	virtual PVariable deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber, int32_t flags);
+	virtual PVariable deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t flags);
+	virtual PVariable getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, uint64_t id, std::map<std::string, bool> fields);
+	virtual PVariable getInstallMode(BaseLib::PRpcClientInfo clientInfo);
+	virtual PVariable putParamset(BaseLib::PRpcClientInfo clientInfo, std::string serialNumber, int32_t channel, ParameterGroup::Type::Enum type, std::string remoteSerialNumber, int32_t remoteChannel, PVariable paramset);
+	virtual PVariable putParamset(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t channel, ParameterGroup::Type::Enum type, uint64_t remoteID, int32_t remoteChannel, PVariable paramset);
+	virtual PVariable setInstallMode(BaseLib::PRpcClientInfo clientInfo, bool on, uint32_t duration = 60, bool debugOutput = true);
 protected:
 	//In table variables
 	int32_t _firmwareVersion = 0;
