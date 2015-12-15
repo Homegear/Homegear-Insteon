@@ -46,6 +46,11 @@ int32_t getFamilyId()
 	return INSTEON_FAMILY_ID;
 }
 
+std::string getFamilyName()
+{
+	return INSTEON_FAMILY_NAME;
+}
+
 BaseLib::Systems::SystemFactory* getFactory()
 {
 	return (BaseLib::Systems::SystemFactory*)(new InsteonFactory);

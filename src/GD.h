@@ -31,6 +31,7 @@
 #define GD_H_
 
 #define INSTEON_FAMILY_ID 2
+#define INSTEON_FAMILY_NAME "Insteon"
 
 #include "PhysicalInterfaces/IInsteonInterface.h"
 #include "homegear-base/BaseLib.h"
