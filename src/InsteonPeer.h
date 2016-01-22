@@ -100,7 +100,7 @@ public:
 
 
     std::shared_ptr<IInsteonInterface> getPhysicalInterface() { return _physicalInterface; }
-	void packetReceived(std::shared_ptr<InsteonPacket> packet)
+	void packetReceived(std::shared_ptr<InsteonPacket> packet);
 
 	//RPC methods
 	virtual PVariable getDeviceInfo(BaseLib::PRpcClientInfo clientInfo, std::map<std::string, bool> fields);
