@@ -87,16 +87,13 @@ void InsteonPeer::setPhysicalInterface(std::shared_ptr<IInsteonInterface> interf
     }
 }
 
-InsteonPeer::InsteonPeer(uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler) : Peer(GD::bl, parentID, centralFeatures, eventHandler)
+InsteonPeer::InsteonPeer(uint32_t parentID, IPeerEventSink* eventHandler) : Peer(GD::bl, parentID, eventHandler)
 {
-	if(centralFeatures)
-	{
-		pendingQueues.reset(new PendingQueues());
-	}
+	pendingQueues.reset(new PendingQueues());
 	setPhysicalInterface(GD::defaultPhysicalInterface);
 }
 
-InsteonPeer::InsteonPeer(int32_t id, int32_t address, std::string serialNumber, uint32_t parentID, bool centralFeatures, IPeerEventSink* eventHandler) : Peer(GD::bl, id, address, serialNumber, parentID, centralFeatures, eventHandler)
+InsteonPeer::InsteonPeer(int32_t id, int32_t address, std::string serialNumber, uint32_t parentID, IPeerEventSink* eventHandler) : Peer(GD::bl, id, address, serialNumber, parentID, eventHandler)
 {
 	setPhysicalInterface(GD::defaultPhysicalInterface);
 }
@@ -108,7 +105,7 @@ InsteonPeer::~InsteonPeer()
 
 void InsteonPeer::worker()
 {
-	if(!_centralFeatures || _disposing) return;
+	if(_disposing) return;
 	try
 	{
 		if(serviceMessages->getConfigPending())
@@ -366,11 +363,8 @@ void InsteonPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared
 				unserializePeers(row->second.at(5)->binaryValue);
 				break;
 			case 16:
-				if(_centralFeatures)
-				{
-					pendingQueues.reset(new PendingQueues());
-					pendingQueues->unserialize(row->second.at(5)->binaryValue, this);
-				}
+				pendingQueues.reset(new PendingQueues());
+				pendingQueues->unserialize(row->second.at(5)->binaryValue, this);
 				break;
 			case 19:
 				_physicalInterfaceID = row->second.at(4)->textValue;
@@ -378,7 +372,7 @@ void InsteonPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared
 				break;
 			}
 		}
-		if(_centralFeatures && !pendingQueues) pendingQueues.reset(new PendingQueues());
+		if(!pendingQueues) pendingQueues.reset(new PendingQueues());
 	}
 	catch(const std::exception& ex)
     {
@@ -483,7 +477,7 @@ void InsteonPeer::savePendingQueues()
 {
 	try
 	{
-		if(!_centralFeatures || !pendingQueues) return;
+		if(!pendingQueues) return;
 		std::vector<uint8_t> serializedData;
 		pendingQueues->serialize(serializedData);
 		saveVariable(16, serializedData);
@@ -720,7 +714,7 @@ void InsteonPeer::packetReceived(std::shared_ptr<InsteonPacket> packet)
 	try
 	{
 		if(!packet) return;
-		if(!_centralFeatures || _disposing) return;
+		if(_disposing) return;
 		if(packet->senderAddress() != _address) return;
 		if(!_rpcDevice) return;
 		std::shared_ptr<InsteonCentral> central = std::dynamic_pointer_cast<InsteonCentral>(getCentral());
@@ -947,7 +941,6 @@ PVariable InsteonPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 	try
 	{
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
-		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(channel < 0) channel = 0;
 		Functions::iterator functionIterator = _rpcDevice->functions.find(channel);
 		if(functionIterator == _rpcDevice->functions.end()) return Variable::createError(-2, "Unknown channel");
@@ -1017,7 +1010,6 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 	{
 		Peer::setValue(clientInfo, channel, valueKey, value, wait); //Ignore result, otherwise setHomegerValue might not be executed
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
-		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(valueKey.empty()) return Variable::createError(-5, "Value key is empty.");
 		if(channel == 0 && serviceMessages->set(valueKey, value->booleanValue)) return PVariable(new Variable(VariableType::tVoid));
 		if(valuesCentral.find(channel) == valuesCentral.end()) return Variable::createError(-2, "Unknown channel.");

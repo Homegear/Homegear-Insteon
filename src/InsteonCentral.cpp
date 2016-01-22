@@ -309,7 +309,7 @@ void InsteonCentral::loadPeers()
 			int32_t peerID = row->second.at(0)->intValue;
 			GD::out.printMessage("Loading peer " + std::to_string(peerID));
 			int32_t address = row->second.at(2)->intValue;
-			std::shared_ptr<InsteonPeer> peer(new InsteonPeer(peerID, address, row->second.at(3)->textValue, _deviceId, true, this));
+			std::shared_ptr<InsteonPeer> peer(new InsteonPeer(peerID, address, row->second.at(3)->textValue, _deviceId, this));
 			if(!peer->load(this)) continue;
 			if(!peer->getRpcDevice()) continue;
 			_peersMutex.lock();
@@ -1289,7 +1289,7 @@ std::shared_ptr<InsteonPeer> InsteonCentral::createPeer(int32_t address, int32_t
 {
 	try
 	{
-		std::shared_ptr<InsteonPeer> peer(new InsteonPeer(_deviceId, true, this));
+		std::shared_ptr<InsteonPeer> peer(new InsteonPeer(_deviceId, this));
 		peer->setAddress(address);
 		peer->setFirmwareVersion(firmwareVersion);
 		peer->setDeviceType(deviceType);
