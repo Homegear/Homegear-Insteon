@@ -80,8 +80,8 @@ InsteonHubX10::~InsteonHubX10()
 	try
 	{
 		_stopCallbackThread = true;
-		if(_initThread.joinable()) _initThread.join();
-		if(_listenThread.joinable()) _listenThread.join();
+		_bl->threadManager.join(_initThread);
+		_bl->threadManager.join(_listenThread);
 	}
     catch(const std::exception& ex)
     {
@@ -671,10 +671,10 @@ void InsteonHubX10::startListening()
 		_socket->setReadTimeout(1000000);
 		_out.printDebug("Connecting to Insteon Hub X10 with Hostname " + _settings->host + " on port " + _settings->port + "...");
 		_stopped = false;
-		_listenThread = std::thread(&InsteonHubX10::listen, this);
-		if(_settings->listenThreadPriority > -1) BaseLib::Threads::setThreadPriority(GD::bl, _listenThread.native_handle(), _settings->listenThreadPriority, _settings->listenThreadPolicy);
-		_initThread = std::thread(&InsteonHubX10::doInit, this);
-		if(_settings->listenThreadPriority > -1) BaseLib::Threads::setThreadPriority(_bl, _initThread.native_handle(), _settings->listenThreadPriority, _settings->listenThreadPolicy);
+		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_listenThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &InsteonHubX10::listen, this);
+		else _bl->threadManager.start(_listenThread, true, &InsteonHubX10::listen, this);
+		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_initThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &InsteonHubX10::doInit, this);
+		else _bl->threadManager.start(_initThread, true, &InsteonHubX10::doInit, this);
 		IPhysicalInterface::startListening();
 	}
     catch(const std::exception& ex)
@@ -696,15 +696,15 @@ void InsteonHubX10::reconnect()
 	try
 	{
 		_socket->close();
-		if(_initThread.joinable()) _initThread.join();
+		_bl->threadManager.join(_initThread);
 		_initStarted = false;
 		_initComplete = false;
 		_out.printDebug("Connecting to Insteon Hub with hostname " + _settings->host + " on port " + _settings->port + "...");
 		_socket->open();
 		_out.printInfo("Connected to Insteon Hub with hostname " + _settings->host + " on port " + _settings->port + ".");
 		_stopped = false;
-		_initThread = std::thread(&InsteonHubX10::doInit, this);
-		if(_settings->listenThreadPriority > -1) BaseLib::Threads::setThreadPriority(_bl, _initThread.native_handle(), _settings->listenThreadPriority, _settings->listenThreadPolicy);
+		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_initThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &InsteonHubX10::doInit, this);
+		else _bl->threadManager.start(_initThread, true, &InsteonHubX10::doInit, this);
 	}
     catch(const std::exception& ex)
     {
@@ -725,8 +725,8 @@ void InsteonHubX10::stopListening()
 	try
 	{
 		_stopCallbackThread = true;
-		if(_initThread.joinable()) _initThread.join();
-		if(_listenThread.joinable()) _listenThread.join();
+		_bl->threadManager.join(_initThread);
+		_bl->threadManager.join(_listenThread);
 		_stopped = true;
 		_stopCallbackThread = false;
 		_socket->close();

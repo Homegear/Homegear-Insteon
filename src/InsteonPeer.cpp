@@ -109,7 +109,6 @@ InsteonPeer::~InsteonPeer()
 void InsteonPeer::worker()
 {
 	if(!_centralFeatures || _disposing) return;
-	std::vector<uint32_t> positionsToDelete;
 	try
 	{
 		if(serviceMessages->getConfigPending())
@@ -344,6 +343,12 @@ void InsteonPeer::save(bool savePeer, bool variables, bool centralConfig)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
+}
+
+bool InsteonPeer::pendingQueuesEmpty()
+{
+	if(!pendingQueues) return true;
+	return pendingQueues->empty();
 }
 
 void InsteonPeer::loadVariables(BaseLib::Systems::ICentral* central, std::shared_ptr<BaseLib::Database::DataTable>& rows)
@@ -955,7 +960,7 @@ PVariable InsteonPeer::putParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 			for(Struct::iterator i = variables->structValue->begin(); i != variables->structValue->end(); ++i)
 			{
 				if(i->first.empty() || !i->second) continue;
-				setValue(clientInfo, channel, i->first, i->second);
+				setValue(clientInfo, channel, i->first, i->second, true);
 			}
 		}
 		else
@@ -1006,11 +1011,11 @@ PVariable InsteonPeer::setInterface(BaseLib::PRpcClientInfo clientInfo, std::str
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t channel, std::string valueKey, PVariable value)
+PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t channel, std::string valueKey, PVariable value, bool wait)
 {
 	try
 	{
-		Peer::setValue(clientInfo, channel, valueKey, value); //Ignore result, otherwise setHomegerValue might not be executed
+		Peer::setValue(clientInfo, channel, valueKey, value, wait); //Ignore result, otherwise setHomegerValue might not be executed
 		if(_disposing) return Variable::createError(-32500, "Peer is disposing.");
 		if(!_centralFeatures) return Variable::createError(-2, "Not a central peer.");
 		if(valueKey.empty()) return Variable::createError(-5, "Value key is empty.");
@@ -1065,7 +1070,7 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 				toggleValue = toggleParam->rpcParameter->convertFromPacket(temp);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
-			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue);
+			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue, wait);
 		}
 
 		std::vector<uint8_t> physicalValue;
@@ -1211,7 +1216,7 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 				queue->push(central->getMessages()->find(packet->messageType(), packet->messageSubtype(), InsteonPacketFlags::DirectAck, std::vector<std::pair<uint32_t, int32_t>>()));
 			}
 			pendingQueues->push(queue);
-			central->enqueuePendingQueues(_address);
+			if(!central->enqueuePendingQueues(_address, wait)) return Variable::createError(-100, "No answer from device.");
 		}
 
 		if(!valueKeys->empty())

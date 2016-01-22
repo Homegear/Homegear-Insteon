@@ -59,8 +59,7 @@ void InsteonCentral::init()
 
 		setUpInsteonMessages();
 
-		_workerThread = std::thread(&InsteonCentral::worker, this);
-		BaseLib::Threads::setThreadPriority(_bl, _workerThread.native_handle(), _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy());
+		_bl->threadManager.start(_workerThread, true, _bl->settings.workerThreadPriority(), _bl->settings.workerThreadPolicy(), &InsteonCentral::worker, this);
 
 		for(std::map<std::string, std::shared_ptr<IInsteonInterface>>::iterator i = GD::physicalInterfaces.begin(); i != GD::physicalInterfaces.end(); ++i)
 		{
@@ -118,12 +117,13 @@ void InsteonCentral::stopThreads()
 {
 	try
 	{
+		_unpairThreadMutex.lock();
+		_bl->threadManager.join(_unpairThread);
+		_unpairThreadMutex.unlock();
+
 		_pairingModeThreadMutex.lock();
-		if(_pairingModeThread.joinable())
-		{
-			_stopPairingModeThread = true;
-			_pairingModeThread.join();
-		}
+		_stopPairingModeThread = true;
+		_bl->threadManager.join(_pairingModeThread);
 		_pairingModeThreadMutex.unlock();
 
 		_peersMutex.lock();
@@ -134,11 +134,8 @@ void InsteonCentral::stopThreads()
 		_peersMutex.unlock();
 
 		_stopWorkerThread = true;
-		if(_workerThread.joinable())
-		{
-			GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
-			_workerThread.join();
-		}
+		GD::out.printDebug("Debug: Waiting for worker thread of device " + std::to_string(_deviceId) + "...");
+		_bl->threadManager.join(_workerThread);
 	}
     catch(const std::exception& ex)
     {
@@ -1235,7 +1232,7 @@ std::string InsteonCentral::handleCliCommand(std::string command)
     return "Error executing command. See log file for more details.\n";
 }
 
-void InsteonCentral::enqueuePendingQueues(int32_t deviceAddress)
+bool InsteonCentral::enqueuePendingQueues(int32_t deviceAddress, bool wait)
 {
 	try
 	{
@@ -1244,17 +1241,33 @@ void InsteonCentral::enqueuePendingQueues(int32_t deviceAddress)
 		if(!peer || !peer->pendingQueues)
 		{
 			_enqueuePendingQueuesMutex.unlock();
-			return;
+			return true;
 		}
 		std::shared_ptr<PacketQueue> queue = _queueManager.get(deviceAddress, peer->getPhysicalInterfaceID());
 		if(!queue) queue = _queueManager.createQueue(peer->getPhysicalInterface(), PacketQueueType::DEFAULT, deviceAddress);
 		if(!queue)
 		{
 			_enqueuePendingQueuesMutex.unlock();
-			return;
+			return true;
 		}
 		if(!queue->peer) queue->peer = peer;
 		if(queue->pendingQueuesEmpty()) queue->push(peer->pendingQueues);
+		_enqueuePendingQueuesMutex.unlock();
+
+		if(wait)
+		{
+			int32_t waitIndex = 0;
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			while(!peer->pendingQueuesEmpty() && waitIndex < 100)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				waitIndex++;
+			}
+
+			if(!peer->pendingQueuesEmpty()) return false;
+		}
+
+		return true;
 	}
 	catch(const std::exception& ex)
     {
@@ -1269,6 +1282,7 @@ void InsteonCentral::enqueuePendingQueues(int32_t deviceAddress)
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
     _enqueuePendingQueuesMutex.unlock();
+    return false;
 }
 
 std::shared_ptr<InsteonPeer> InsteonCentral::createPeer(int32_t address, int32_t firmwareVersion, BaseLib::Systems::LogicalDeviceType deviceType, std::string serialNumber, bool save)
@@ -1988,8 +2002,10 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint6
 
 		bool defer = flags & 0x04;
 		bool force = flags & 0x02;
-		std::thread t(&InsteonCentral::unpair, this, id);
-		t.detach();
+		_unpairThreadMutex.lock();
+		_bl->threadManager.join(_unpairThread);
+		_bl->threadManager.start(_unpairThread, false, &InsteonCentral::unpair, this, id);
+		_unpairThreadMutex.unlock();
 		//Force delete
 		if(force) deletePeer(peer->getID());
 		else
@@ -2212,7 +2228,7 @@ std::shared_ptr<Variable> InsteonCentral::setInstallMode(BaseLib::PRpcClientInfo
 			return Variable::createError(-32500, "Central is disposing.");
 		}
 		_stopPairingModeThread = true;
-		if(_pairingModeThread.joinable()) _pairingModeThread.join();
+		_bl->threadManager.join(_pairingModeThread);
 		_stopPairingModeThread = false;
 		_abortPairingModeThread = false;
 		_timeLeftInPairingMode = 0;
@@ -2221,7 +2237,7 @@ std::shared_ptr<Variable> InsteonCentral::setInstallMode(BaseLib::PRpcClientInfo
 		{
 			_timeLeftInPairingMode = duration; //Has to be set here, so getInstallMode is working immediately
 			enablePairingMode("");
-			_pairingModeThread = std::thread(&InsteonCentral::pairingModeTimer, this, duration, debugOutput);
+			_bl->threadManager.start(_pairingModeThread, false, &InsteonCentral::pairingModeTimer, this, duration, debugOutput);
 		}
 		_pairingModeThreadMutex.unlock();
 		return PVariable(new Variable(VariableType::tVoid));
