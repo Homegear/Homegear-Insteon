@@ -909,6 +909,7 @@ void PacketQueue::nextQueueEntry(bool sendImmediately)
 				_stopResendThread = true;
 				GD::out.printInfo("Info: Queue " + std::to_string(id) + " is empty and there are no pending queues.");
 				_workingOnPendingQueue = false;
+				_pendingQueues.reset();
 				_queueMutex.unlock();
 				return;
 			}
