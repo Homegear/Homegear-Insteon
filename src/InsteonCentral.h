@@ -30,7 +30,7 @@
 #ifndef INSTEONCENTRAL_H_
 #define INSTEONCENTRAL_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "InsteonPeer.h"
 #include "InsteonPacket.h"
 #include "QueueManager.h"

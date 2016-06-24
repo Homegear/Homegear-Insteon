@@ -30,7 +30,7 @@
 #ifndef INSTEON_H_
 #define INSTEON_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 
 using namespace BaseLib;
 

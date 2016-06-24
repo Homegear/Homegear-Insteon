@@ -34,7 +34,7 @@
 #define INSTEON_FAMILY_NAME "Insteon"
 
 #include "PhysicalInterfaces/IInsteonInterface.h"
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "Insteon.h"
 
 using namespace BaseLib;

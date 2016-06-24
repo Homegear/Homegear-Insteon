@@ -31,7 +31,7 @@
 #include "InsteonMessage.h"
 #include "PendingQueues.h"
 #include "InsteonCentral.h"
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "GD.h"
 
 namespace Insteon

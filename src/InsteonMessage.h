@@ -30,7 +30,7 @@
 #ifndef INSTEONMESSAGE_H
 #define INSTEONMESSAGE_H
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 
 #include <iostream>
