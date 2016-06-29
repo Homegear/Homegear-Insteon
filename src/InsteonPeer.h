@@ -30,7 +30,7 @@
 #ifndef INSTEONPEER_H_
 #define INSTEONPEER_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 #include "PendingQueues.h"
 #include "PhysicalInterfaces/IInsteonInterface.h"

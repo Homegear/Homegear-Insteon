@@ -30,7 +30,7 @@
 #ifndef INSTEONCENTRAL_H_
 #define INSTEONCENTRAL_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "InsteonPeer.h"
 #include "InsteonPacket.h"
 #include "QueueManager.h"
@@ -55,8 +55,6 @@ public:
 	void setFirmwareVersion(int32_t value) { _firmwareVersion = value; saveVariable(0, value); }
 	int32_t getCentralAddress() { return _centralAddress; }
 	void setCentralAddress(int32_t value) { _centralAddress = value; saveVariable(1, value); }
-	std::string getPhysicalInterfaceID() { return _physicalInterfaceID; }
-	void setPhysicalInterfaceID(std::string);
 	//End
 
 	InsteonCentral(ICentralEventSink* eventHandler);
@@ -104,7 +102,6 @@ protected:
 	//In table variables
 	int32_t _firmwareVersion = 0;
 	int32_t _centralAddress = 0;
-	std::string _physicalInterfaceID;
 	//End
 
 	bool _stopWorkerThread = false;
@@ -115,7 +112,6 @@ protected:
 	PacketManager _receivedPackets;
 	PacketManager _sentPackets;
 	std::shared_ptr<InsteonMessages> _messages;
-	std::shared_ptr<BaseLib::Systems::IPhysicalInterface> _physicalInterface;
 
 	uint32_t _timeLeftInPairingMode = 0;
 	void pairingModeTimer(int32_t duration, bool debugOutput = true);

@@ -53,7 +53,6 @@ void InsteonCentral::init()
 	{
 		if(_initialized) return; //Prevent running init two times
 		_initialized = true;
-		_physicalInterface = GD::defaultPhysicalInterface;
 
 		_messages = std::shared_ptr<InsteonMessages>(new InsteonMessages());
 
@@ -63,7 +62,7 @@ void InsteonCentral::init()
 
 		for(std::map<std::string, std::shared_ptr<IInsteonInterface>>::iterator i = GD::physicalInterfaces.begin(); i != GD::physicalInterfaces.end(); ++i)
 		{
-			i->second->addEventHandler((IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
+			_physicalInterfaceEventhandlers[i->first] = i->second->addEventHandler((IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
 		}
 	}
 	catch(const std::exception& ex)
@@ -90,7 +89,7 @@ void InsteonCentral::dispose(bool wait)
 		for(std::map<std::string, std::shared_ptr<IInsteonInterface>>::iterator i = GD::physicalInterfaces.begin(); i != GD::physicalInterfaces.end(); ++i)
 		{
 			//Just to make sure cycle through all physical devices. If event handler is not removed => segfault
-			i->second->removeEventHandler(_physicalInterfaceEventhandler);
+			i->second->removeEventHandler(_physicalInterfaceEventhandlers[i->first]);
 		}
 
 		stopThreads();
@@ -202,18 +201,6 @@ std::shared_ptr<IPhysicalInterface> InsteonCentral::getPhysicalInterface(int32_t
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
     return GD::defaultPhysicalInterface;
-}
-
-void InsteonCentral::setPhysicalInterfaceID(std::string id)
-{
-	if(id.empty() || (GD::physicalInterfaces.find(id) != GD::physicalInterfaces.end() && GD::physicalInterfaces.at(id)))
-	{
-		if(_physicalInterface) _physicalInterface->removeEventHandler(_physicalInterfaceEventhandler);
-		_physicalInterfaceID = id;
-		_physicalInterface = id.empty() ? GD::defaultPhysicalInterface : GD::physicalInterfaces.at(_physicalInterfaceID);
-		_physicalInterfaceEventhandler = _physicalInterface->addEventHandler((BaseLib::Systems::IPhysicalInterface::IPhysicalInterfaceEventSink*)this);
-		saveVariable(4, _physicalInterfaceID);
-	}
 }
 
 void InsteonCentral::worker()
@@ -353,10 +340,6 @@ void InsteonCentral::loadVariables()
 			case 1:
 				_centralAddress = row->second.at(3)->intValue;
 				break;
-			case 4:
-				_physicalInterfaceID = row->second.at(4)->textValue;
-				if(!_physicalInterfaceID.empty() && GD::physicalInterfaces.find(_physicalInterfaceID) != GD::physicalInterfaces.end()) _physicalInterface = GD::physicalInterfaces.at(_physicalInterfaceID);
-				break;
 			}
 		}
 	}
@@ -410,7 +393,6 @@ void InsteonCentral::saveVariables()
 		if(_deviceId == 0) return;
 		saveVariable(0, _firmwareVersion);
 		saveVariable(1, _centralAddress);
-		saveVariable(4, _physicalInterfaceID);
 	}
 	catch(const std::exception& ex)
     {

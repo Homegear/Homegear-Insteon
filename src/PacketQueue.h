@@ -30,7 +30,7 @@
 #ifndef PACKETQUEUE_H
 #define PACKETQUEUE_H
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 
 #include <iostream>

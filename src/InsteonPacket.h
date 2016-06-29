@@ -30,7 +30,7 @@
 #ifndef INSTEONPACKET_H_
 #define INSTEONPACKET_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "PhysicalInterfaces/IInsteonInterface.h"
 
 #include <map>

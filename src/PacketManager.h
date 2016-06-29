@@ -30,7 +30,7 @@
 #ifndef PACKETMANAGER_H_
 #define PACKETMANAGER_H_
 
-#include "homegear-base/BaseLib.h"
+#include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 
 #include <iostream>
