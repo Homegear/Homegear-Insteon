@@ -39,7 +39,7 @@ InsteonHubX10::InsteonHubX10(std::shared_ptr<BaseLib::Systems::PhysicalInterface
 	_out.setPrefix(GD::out.getPrefix() + "Insteon Hub X10 \"" + settings->id + "\": ");
 
 	signal(SIGPIPE, SIG_IGN);
-	_socket = std::unique_ptr<BaseLib::SocketOperations>(new BaseLib::SocketOperations(_bl));
+	_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(_bl));
 
 	_lengthLookup[0x50] = 11;
 	_lengthLookup[0x51] = 25;
@@ -667,7 +667,7 @@ void InsteonHubX10::startListening()
 	try
 	{
 		stopListening();
-		_socket = std::unique_ptr<BaseLib::SocketOperations>(new BaseLib::SocketOperations(GD::bl, _settings->host, _settings->port));
+		_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(GD::bl, _settings->host, _settings->port));
 		_socket->setReadTimeout(1000000);
 		_out.printDebug("Connecting to Insteon Hub X10 with Hostname " + _settings->host + " on port " + _settings->port + "...");
 		_stopped = false;
