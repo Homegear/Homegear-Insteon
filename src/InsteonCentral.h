@@ -128,7 +128,7 @@ protected:
 	std::mutex _enqueuePendingQueuesMutex;
 
 	void addPeer(std::shared_ptr<InsteonPeer> peer);
-	std::shared_ptr<InsteonPeer> createPeer(int32_t address, int32_t firmwareVersion, BaseLib::Systems::LogicalDeviceType deviceType, std::string serialNumber, bool save = true);
+	std::shared_ptr<InsteonPeer> createPeer(int32_t address, int32_t firmwareVersion, uint32_t deviceType, std::string serialNumber, bool save = true);
 	void createPairingQueue(int32_t address, std::string interfaceID, std::shared_ptr<InsteonPeer> peer = nullptr);
 	void deletePeer(uint64_t id);
 	virtual std::shared_ptr<IPhysicalInterface> getPhysicalInterface(int32_t peerAddress, std::string interfaceID = "");
