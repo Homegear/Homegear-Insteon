@@ -98,8 +98,8 @@ class InsteonHubX10  : public IInsteonInterface
         std::mutex _requestMutex;
         std::shared_ptr<Request> _request;
         std::mutex _sendMutex;
-        bool _initStarted = false;
-        bool _initComplete = false;
+        std::atomic_bool _initStarted;
+        std::atomic_bool _initComplete;
         int32_t _centralAddress = 0xFFFFFF;
         std::map<int32_t, int32_t> _lengthLookup;
         const uint32_t _maxLinks = 415;

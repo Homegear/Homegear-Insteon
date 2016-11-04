@@ -41,6 +41,9 @@ PacketManager::PacketManager()
 {
 	try
 	{
+		_stopWorkerThread = false;
+		_disposing = false;
+
 		GD::bl->threadManager.start(_workerThread, true, GD::bl->settings.workerThreadPriority(), GD::bl->settings.workerThreadPolicy(), &PacketManager::worker, this);
 	}
 	catch(const std::exception& ex)

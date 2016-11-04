@@ -40,6 +40,8 @@ InsteonHubX10::InsteonHubX10(std::shared_ptr<BaseLib::Systems::PhysicalInterface
 
 	signal(SIGPIPE, SIG_IGN);
 	_socket = std::unique_ptr<BaseLib::TcpSocket>(new BaseLib::TcpSocket(_bl));
+	_initStarted = false;
+	_initComplete = false;
 
 	_lengthLookup[0x50] = 11;
 	_lengthLookup[0x51] = 25;

@@ -41,7 +41,7 @@ class InsteonCentral;
 class Insteon : public BaseLib::Systems::DeviceFamily
 {
 public:
-	Insteon(BaseLib::Obj* bl, IFamilyEventSink* eventHandler);
+	Insteon(BaseLib::SharedObjects* bl, IFamilyEventSink* eventHandler);
 	virtual ~Insteon();
 	virtual void dispose();
 

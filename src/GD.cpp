@@ -31,7 +31,7 @@
 
 namespace Insteon
 {
-	BaseLib::Obj* GD::bl = nullptr;
+	BaseLib::SharedObjects* GD::bl = nullptr;
 	Insteon* GD::family = nullptr;
 	std::map<std::string, std::shared_ptr<IInsteonInterface>> GD::physicalInterfaces;
 	std::shared_ptr<IInsteonInterface> GD::defaultPhysicalInterface;

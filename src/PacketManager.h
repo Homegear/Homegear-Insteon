@@ -68,8 +68,8 @@ public:
 	void dispose(bool wait = true);
 	void setKeepAliveTime(uint32_t value) { _deleteAfter = value; }
 protected:
-	bool _disposing = false;
-	bool _stopWorkerThread = false;
+	std::atomic_bool _disposing;
+	std::atomic_bool _stopWorkerThread;
     std::thread _workerThread;
 	uint32_t _id = 0;
 	std::unordered_map<int32_t, std::shared_ptr<InsteonPacketInfo>> _packets;

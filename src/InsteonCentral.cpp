@@ -55,6 +55,11 @@ void InsteonCentral::init()
 		_initialized = true;
 
 		_messages = std::shared_ptr<InsteonMessages>(new InsteonMessages());
+		_stopWorkerThread = false;
+		_stopPairingModeThread = false;
+		_abortPairingModeThread = false;
+		_pairing = false;
+		_timeLeftInPairingMode = 0;
 
 		setUpInsteonMessages();
 

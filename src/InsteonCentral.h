@@ -104,19 +104,19 @@ protected:
 	int32_t _centralAddress = 0;
 	//End
 
-	bool _stopWorkerThread = false;
+	std::atomic_bool _stopWorkerThread;
 	std::thread _workerThread;
 
-	bool _pairing = false;
+	std::atomic_bool _pairing;
 	QueueManager _queueManager;
 	PacketManager _receivedPackets;
 	PacketManager _sentPackets;
 	std::shared_ptr<InsteonMessages> _messages;
 
-	uint32_t _timeLeftInPairingMode = 0;
+	std::atomic<uint32_t> _timeLeftInPairingMode;
 	void pairingModeTimer(int32_t duration, bool debugOutput = true);
-	bool _stopPairingModeThread = false;
-	bool _abortPairingModeThread = false;
+	std::atomic_bool _stopPairingModeThread;
+	std::atomic_bool _abortPairingModeThread;
 	std::mutex _pairingModeThreadMutex;
 	std::thread _pairingModeThread;
 	int64_t _manualPairingModeStarted = -1;
