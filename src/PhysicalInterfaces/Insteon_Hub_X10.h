@@ -92,7 +92,6 @@ class InsteonHubX10  : public IInsteonInterface
         std::set<int32_t> _pairedPeers;
         std::set<int32_t> _usedDatabaseAddresses;
         int64_t _lastAction = 0;
-        std::string _hostname;
         std::string _port;
         std::unique_ptr<BaseLib::TcpSocket> _socket;
         std::mutex _requestMutex;

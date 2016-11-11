@@ -69,7 +69,6 @@ protected:
 	};
 
 	BaseLib::Output _out;
-	int32_t _myAddress = 0xFFFFFF;
 };
 
 }

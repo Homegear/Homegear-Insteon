@@ -543,6 +543,8 @@ void InsteonHubX10::doInit()
 			try
 			{
 				_socket->open();
+				_hostname = _settings->host;
+				_ipAddress = _socket->getIpAddress();
 			}
 			catch(const std::exception& ex)
 			{
@@ -703,6 +705,8 @@ void InsteonHubX10::reconnect()
 		_initComplete = false;
 		_out.printDebug("Connecting to Insteon Hub with hostname " + _settings->host + " on port " + _settings->port + "...");
 		_socket->open();
+		_hostname = _settings->host;
+		_ipAddress = _socket->getIpAddress();
 		_out.printInfo("Connected to Insteon Hub with hostname " + _settings->host + " on port " + _settings->port + ".");
 		_stopped = false;
 		if(_settings->listenThreadPriority > -1) _bl->threadManager.start(_initThread, true, _settings->listenThreadPriority, _settings->listenThreadPolicy, &InsteonHubX10::doInit, this);
