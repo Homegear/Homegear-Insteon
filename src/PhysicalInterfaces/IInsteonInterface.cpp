@@ -41,6 +41,7 @@ IInsteonInterface::IInsteonInterface(std::shared_ptr<BaseLib::Systems::PhysicalI
 		settings->listenThreadPriority = 0;
 		settings->listenThreadPolicy = SCHED_OTHER;
 	}
+	_myAddress = 0xFFFFFF;
 }
 
 IInsteonInterface::~IInsteonInterface()

@@ -48,7 +48,7 @@ class GD
 public:
 	virtual ~GD();
 
-	static BaseLib::Obj* bl;
+	static BaseLib::SharedObjects* bl;
 	static Insteon* family;
 	static std::map<std::string, std::shared_ptr<IInsteonInterface>> physicalInterfaces;
 	static std::shared_ptr<IInsteonInterface> defaultPhysicalInterface;
