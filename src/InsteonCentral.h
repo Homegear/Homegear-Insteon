@@ -66,7 +66,7 @@ public:
 
 	virtual bool onPacketReceived(std::string& senderID, std::shared_ptr<BaseLib::Systems::Packet> packet);
 	virtual std::string handleCliCommand(std::string command);
-	virtual uint64_t getPeerIdFromSerial(std::string serialNumber) { std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber); if(peer) return peer->getID(); else return 0; }
+	virtual uint64_t getPeerIdFromSerial(std::string& serialNumber) { std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber); if(peer) return peer->getID(); else return 0; }
 	virtual bool enqueuePendingQueues(int32_t deviceAddress, bool wait = false);
 	void unpair(uint64_t id);
 
