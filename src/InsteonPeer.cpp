@@ -741,29 +741,29 @@ void InsteonPeer::packetReceived(std::shared_ptr<InsteonPacket> packet)
 						rpcValues[*j].reset(new std::vector<PVariable>());
 					}
 
-					BaseLib::Systems::RPCConfigurationParameter* parameter = &valuesCentral[*j][i->first];
-					parameter->data = i->second.value;
-					if(parameter->databaseID > 0) saveParameter(parameter->databaseID, parameter->data);
-					else saveParameter(0, ParameterGroup::Type::Enum::variables, *j, i->first, parameter->data);
+					BaseLib::Systems::RpcConfigurationParameter& parameter = valuesCentral[*j][i->first];
+					parameter.setBinaryData(i->second.value);
+					if(parameter.databaseId > 0) saveParameter(parameter.databaseId, i->second.value);
+					else saveParameter(0, ParameterGroup::Type::Enum::variables, *j, i->first, i->second.value);
 					if(_bl->debugLevel >= 4) GD::out.printInfo("Info: " + i->first + " of peer " + std::to_string(_peerID) + " with serial number " + _serialNumber + ":" + std::to_string(*j) + " was set to 0x" + BaseLib::HelperFunctions::getHexString(i->second.value) + ".");
 
-					if(parameter->rpcParameter)
+					if(parameter.rpcParameter)
 					{
 						//Process service messages
-						if(parameter->rpcParameter->service && !i->second.value.empty())
+						if(parameter.rpcParameter->service && !i->second.value.empty())
 						{
-							if(parameter->rpcParameter->logical->type == ILogical::Type::Enum::tEnum)
+							if(parameter.rpcParameter->logical->type == ILogical::Type::Enum::tEnum)
 							{
 								serviceMessages->set(i->first, i->second.value.at(0), *j);
 							}
-							else if(parameter->rpcParameter->logical->type == ILogical::Type::Enum::tBoolean)
+							else if(parameter.rpcParameter->logical->type == ILogical::Type::Enum::tBoolean)
 							{
 								serviceMessages->set(i->first, (bool)i->second.value.at(0));
 							}
 						}
 
 						valueKeys[*j]->push_back(i->first);
-						rpcValues[*j]->push_back(parameter->rpcParameter->convertFromPacket(i->second.value, true));
+						rpcValues[*j]->push_back(parameter.rpcParameter->convertFromPacket(i->second.value, true));
 					}
 				}
 			}
@@ -876,7 +876,8 @@ PVariable InsteonPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 				if(!i->second->readable) continue;
 				if(valuesCentral.find(channel) == valuesCentral.end()) continue;
 				if(valuesCentral[channel].find(i->second->id) == valuesCentral[channel].end()) continue;
-				element = i->second->convertFromPacket(valuesCentral[channel][i->second->id].data);
+				std::vector<uint8_t> parameterValue = valuesCentral[channel][i->second->id].getBinaryData();
+				element = i->second->convertFromPacket(parameterValue);
 			}
 
 			if(!element) continue;
@@ -1013,7 +1014,7 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		if(valuesCentral[channel].find(valueKey) == valuesCentral[channel].end()) return Variable::createError(-5, "Unknown parameter.");
 		PParameter rpcParameter = valuesCentral[channel][valueKey].rpcParameter;
 		if(!rpcParameter) return Variable::createError(-5, "Unknown parameter.");
-		BaseLib::Systems::RPCConfigurationParameter* parameter = &valuesCentral[channel][valueKey];
+		BaseLib::Systems::RpcConfigurationParameter& parameter = valuesCentral[channel][valueKey];
 		std::shared_ptr<std::vector<std::string>> valueKeys(new std::vector<std::string>());
 		std::shared_ptr<std::vector<PVariable>> values(new std::vector<PVariable>());
 		if(rpcParameter->readable)
@@ -1023,9 +1024,10 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		}
 		if(rpcParameter->physical->operationType == IPhysical::OperationType::Enum::store)
 		{
-			rpcParameter->convertToPacket(value, parameter->data);
-			if(parameter->databaseID > 0) saveParameter(parameter->databaseID, parameter->data);
-			else saveParameter(0, ParameterGroup::Type::Enum::variables, channel, valueKey, parameter->data);
+			std::vector<uint8_t> parameterData = parameter.getBinaryData();
+			rpcParameter->convertToPacket(value, parameterData);
+			if(parameter.databaseId > 0) saveParameter(parameter.databaseId, parameterData);
+			else saveParameter(0, ParameterGroup::Type::Enum::variables, channel, valueKey, parameterData);
 			if(!valueKeys->empty())
 			{
 				raiseEvent(_peerID, channel, valueKeys, values);
@@ -1042,21 +1044,22 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 			//Handle toggle parameter
 			if(toggleCast->parameter.empty()) return Variable::createError(-6, "No toggle parameter specified (parameter attribute value is empty).");
 			if(valuesCentral[channel].find(toggleCast->parameter) == valuesCentral[channel].end()) return Variable::createError(-5, "Toggle parameter not found.");
-			BaseLib::Systems::RPCConfigurationParameter* toggleParam = &valuesCentral[channel][toggleCast->parameter];
+			BaseLib::Systems::RpcConfigurationParameter& toggleParam = valuesCentral[channel][toggleCast->parameter];
+			std::vector<uint8_t> parameterData = toggleParam.getBinaryData();
 			PVariable toggleValue;
-			if(toggleParam->rpcParameter->logical->type == ILogical::Type::Enum::tBoolean)
+			if(toggleParam.rpcParameter->logical->type == ILogical::Type::Enum::tBoolean)
 			{
-				toggleValue = toggleParam->rpcParameter->convertFromPacket(toggleParam->data);
+				toggleValue = toggleParam.rpcParameter->convertFromPacket(parameterData);
 				toggleValue->booleanValue = !toggleValue->booleanValue;
 			}
-			else if(toggleParam->rpcParameter->logical->type == ILogical::Type::Enum::tInteger ||
-					toggleParam->rpcParameter->logical->type == ILogical::Type::Enum::tFloat)
+			else if(toggleParam.rpcParameter->logical->type == ILogical::Type::Enum::tInteger ||
+					toggleParam.rpcParameter->logical->type == ILogical::Type::Enum::tFloat)
 			{
-				int32_t currentToggleValue = (int32_t)toggleParam->data.at(0);
+				int32_t currentToggleValue = (int32_t)parameterData.at(0);
 				std::vector<uint8_t> temp({0});
 				if(currentToggleValue != toggleCast->on) temp.at(0) = toggleCast->on;
 				else temp.at(0) = toggleCast->off;
-				toggleValue = toggleParam->rpcParameter->convertFromPacket(temp);
+				toggleValue = toggleParam.rpcParameter->convertFromPacket(temp);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
 			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue, wait);
@@ -1081,8 +1084,8 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		}
 		if(setRequests.empty()) return Variable::createError(-6, "No matching packet found for setting this parameter. Is the parameter read only?");
 
-		parameter->data = physicalValue;
-		if(parameter->databaseID > 0) saveParameter(parameter->databaseID, physicalValue);
+		parameter.setBinaryData(physicalValue);
+		if(parameter.databaseId > 0) saveParameter(parameter.databaseId, physicalValue);
 		else saveParameter(0, ParameterGroup::Type::Enum::variables, channel, valueKey, physicalValue);
 		if(_bl->debugLevel > 4) GD::out.printDebug("Debug: " + valueKey + " of peer " + std::to_string(_peerID) + " with serial number " + _serialNumber + ":" + std::to_string(channel) + " was set to " + BaseLib::HelperFunctions::getHexString(physicalValue) + ".");
 
@@ -1122,35 +1125,36 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 					packet->setPosition((*i)->index, (*i)->size, data);
 					continue;
 				}
-				BaseLib::Systems::RPCConfigurationParameter* additionalParameter = nullptr;
+				BaseLib::Systems::RpcConfigurationParameter* additionalParameter = nullptr;
 				//We can't just search for param, because it is ambiguous (see for example LEVEL for HM-CC-TC.
 				if((*i)->parameterId == "ON_TIME" && valuesCentral[channel].find((*i)->parameterId) != valuesCentral[channel].end())
 				{
 					additionalParameter = &valuesCentral[channel][(*i)->parameterId];
+					std::vector<uint8_t> parameterData = additionalParameter->getBinaryData();
 					int32_t intValue = 0;
-					_bl->hf.memcpyBigEndian(intValue, additionalParameter->data);
+					_bl->hf.memcpyBigEndian(intValue, parameterData);
 					if(!(*i)->omitIfSet || intValue != (*i)->omitIf)
 					{
 						//Don't set ON_TIME when value is false
-						if((rpcParameter->physical->groupId == "STATE" && value->booleanValue) || (rpcParameter->physical->groupId == "LEVEL" && value->floatValue > 0)) packet->setPosition((*i)->index, (*i)->size, additionalParameter->data);
+						if((rpcParameter->physical->groupId == "STATE" && value->booleanValue) || (rpcParameter->physical->groupId == "LEVEL" && value->floatValue > 0)) packet->setPosition((*i)->index, (*i)->size, parameterData);
 					}
 				}
 				//param sometimes is ambiguous (e. g. LEVEL of HM-CC-TC), so don't search and use the given parameter when possible
 				else if((*i)->parameterId == rpcParameter->physical->groupId)
 				{
-					std::vector<uint8_t> data = valuesCentral[channel][valueKey].data;
+					std::vector<uint8_t> data = valuesCentral[channel][valueKey].getBinaryData();
 					packet->setPosition((*i)->index, (*i)->size, data);
 				}
 				//Search for all other parameters
 				else
 				{
 					bool paramFound = false;
-					for(std::unordered_map<std::string, BaseLib::Systems::RPCConfigurationParameter>::iterator j = valuesCentral[channel].begin(); j != valuesCentral[channel].end(); ++j)
+					for(std::unordered_map<std::string, BaseLib::Systems::RpcConfigurationParameter>::iterator j = valuesCentral[channel].begin(); j != valuesCentral[channel].end(); ++j)
 					{
 						//Only compare id. Till now looking for value_id was not necessary.
 						if((*i)->parameterId == j->second.rpcParameter->physical->groupId)
 						{
-							std::vector<uint8_t> data = j->second.data;
+							std::vector<uint8_t> data = j->second.getBinaryData();
 							packet->setPosition((*i)->index, (*i)->size, data);
 							paramFound = true;
 							break;
@@ -1167,12 +1171,12 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 					PVariable logicalDefaultValue = valuesCentral.at(channel).at(*j).rpcParameter->logical->getDefaultValue();
 					std::vector<uint8_t> defaultValue;
 					valuesCentral.at(channel).at(*j).rpcParameter->convertToPacket(logicalDefaultValue, defaultValue);
-					if(defaultValue != valuesCentral.at(channel).at(*j).data)
+					if(!valuesCentral.at(channel).at(*j).equals(defaultValue))
 					{
-						BaseLib::Systems::RPCConfigurationParameter* tempParam = &valuesCentral.at(channel).at(*j);
-						tempParam->data = defaultValue;
-						if(tempParam->databaseID > 0) saveParameter(tempParam->databaseID, tempParam->data);
-						else saveParameter(0, ParameterGroup::Type::Enum::variables, channel, *j, tempParam->data);
+						BaseLib::Systems::RpcConfigurationParameter& tempParam = valuesCentral.at(channel).at(*j);
+						tempParam.setBinaryData(defaultValue);
+						if(tempParam.databaseId > 0) saveParameter(tempParam.databaseId, defaultValue);
+						else saveParameter(0, ParameterGroup::Type::Enum::variables, channel, *j, defaultValue);
 						GD::out.printInfo( "Info: Parameter \"" + *j + "\" was reset to " + BaseLib::HelperFunctions::getHexString(defaultValue) + ". Peer: " + std::to_string(_peerID) + " Serial number: " + _serialNumber + " Frame: " + frame->id);
 						if(rpcParameter->readable)
 						{
