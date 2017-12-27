@@ -806,7 +806,7 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 				index++;
 			}
 
-			setInstallMode(nullptr, true, duration, false);
+			setInstallMode(nullptr, true, duration, nullptr, false);
 			stringStream << "Pairing mode enabled." << std::endl;
 			return stringStream.str();
 		}
@@ -837,7 +837,7 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 				index++;
 			}
 
-			setInstallMode(nullptr, false, -1, false);
+			setInstallMode(nullptr, false, -1, nullptr, false);
 			stringStream << "Pairing mode disabled." << std::endl;
 			return stringStream.str();
 		}
@@ -2205,7 +2205,7 @@ void InsteonCentral::pairingModeTimer(int32_t duration, bool debugOutput)
     }
 }
 
-std::shared_ptr<Variable> InsteonCentral::setInstallMode(BaseLib::PRpcClientInfo clientInfo, bool on, uint32_t duration, bool debugOutput)
+std::shared_ptr<Variable> InsteonCentral::setInstallMode(BaseLib::PRpcClientInfo clientInfo, bool on, uint32_t duration, BaseLib::PVariable metadata, bool debugOutput)
 {
 	try
 	{
