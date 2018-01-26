@@ -93,7 +93,7 @@ void Insteon::createCentral()
     }
 }
 
-PVariable Insteon::getPairingMethods()
+PVariable Insteon::getPairingInfo()
 {
 	try
 	{
