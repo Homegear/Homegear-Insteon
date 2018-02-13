@@ -63,6 +63,7 @@ void Interfaces::create()
 				if(i->second->isDefault || !GD::defaultPhysicalInterface) GD::defaultPhysicalInterface = device;
 			}
 		}
+		if(!GD::defaultPhysicalInterface) GD::defaultPhysicalInterface = std::make_shared<IInsteonInterface>(std::make_shared<BaseLib::Systems::PhysicalInterfaceSettings>());
 	}
 	catch(const std::exception& ex)
 	{

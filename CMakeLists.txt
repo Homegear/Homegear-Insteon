@@ -33,8 +33,7 @@ set(SOURCE_FILES
         src/PendingQueues.cpp
         src/PendingQueues.h
         src/QueueManager.cpp
-        src/QueueManager.h
-        config.h)
+        src/QueueManager.h)
 
 add_custom_target(homegear COMMAND ../../makeAll.sh SOURCES ${SOURCE_FILES})
 
