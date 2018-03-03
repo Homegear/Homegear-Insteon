@@ -721,7 +721,8 @@ void InsteonCentral::deletePeer(uint64_t id)
 			channels->arrayValue->push_back(PVariable(new Variable(i->first)));
 		}
 
-		raiseRPCDeleteDevices(deviceAddresses, deviceInfo);
+        std::vector<uint64_t> deletedIds{ id };
+		raiseRPCDeleteDevices(deletedIds, deviceAddresses, deviceInfo);
 
 		{
 			std::lock_guard<std::mutex> peersGuard(_peersMutex);
@@ -1719,7 +1720,8 @@ void InsteonCentral::addPeer(std::shared_ptr<InsteonPeer> peer)
 		peer->getPhysicalInterface()->addPeer(peer->getAddress());
 		PVariable deviceDescriptions(new Variable(VariableType::tArray));
 		deviceDescriptions->arrayValue = peer->getDeviceDescriptions(nullptr, true, std::map<std::string, bool>());
-		raiseRPCNewDevices(deviceDescriptions);
+        std::vector<uint64_t> newIds{ peer->getID() };
+		raiseRPCNewDevices(newIds, deviceDescriptions);
 		GD::out.printMessage("Added peer 0x" + BaseLib::HelperFunctions::getHexString(peer->getAddress()) + ".");
 		addHomegearFeatures(peer);
 	}
