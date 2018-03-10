@@ -115,8 +115,9 @@ PVariable Insteon::getPairingInfo()
 		setInstallModeMetadata->structValue->emplace("metadataInfo", setInstallModeMetadataInfo);
 
 		pairingMethods->structValue->emplace("setInstallMode", setInstallModeMetadata);
-		info->structValue->emplace("pairingMethods", pairingMethods);
 		//}}}
+
+        info->structValue->emplace("pairingMethods", pairingMethods);
 		//}}}
 
 		//{{{ interfaces
