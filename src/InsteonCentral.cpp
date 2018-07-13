@@ -1628,7 +1628,12 @@ void InsteonCentral::handleNak(std::shared_ptr<InsteonPacket> packet)
 			{
 				//Just remove the peer. Probably the link database packet was sent twice, that's why we receive a NAK.
 				std::shared_ptr<InsteonPeer> peer = getPeer(packet->senderAddress());
-				if(peer) deletePeer(peer->getID());
+				if(peer)
+				{
+					uint64_t peerId = peer->getID();
+					peer.reset();
+					deletePeer(peerId);
+				}
 			}
 		}
 	}
@@ -1783,7 +1788,12 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
 		else if(queue->getQueueType() == PacketQueueType::UNPAIRING && sentPacket && sentPacket->payload()->size() > 3 && sentPacket->payload()->at(3) == 0xFF)
 		{
 			std::shared_ptr<InsteonPeer> peer = getPeer(packet->senderAddress());
-			if(peer) deletePeer(peer->getID());
+			if(peer)
+			{
+				uint64_t peerId = peer->getID();
+				peer.reset();
+				deletePeer(peerId);
+			}
 		}
 
 		queue->pop(true); //Messages are not popped by default.
@@ -1974,9 +1984,16 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
 	{
 		if(serialNumber.empty()) return Variable::createError(-2, "Unknown device.");
 		if(serialNumber[0] == '*') return Variable::createError(-2, "Cannot delete virtual device.");
-		std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber);
-		if(!peer) return PVariable(new Variable(VariableType::tVoid));
-		return deleteDevice(clientInfo, peer->getID(), flags);
+
+		uint64_t peerId = 0;
+
+		{
+			std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber);
+			if(!peer) return PVariable(new Variable(VariableType::tVoid));
+			peerId = peer->getID();
+		}
+
+		return deleteDevice(clientInfo, peerId, flags);
 	}
 	catch(const std::exception& ex)
     {
@@ -1993,36 +2010,46 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t flags)
+PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerId, int32_t flags)
 {
 	try
 	{
-		if(peerID == 0) return Variable::createError(-2, "Unknown device.");
-		if(peerID & 0x80000000) return Variable::createError(-2, "Cannot delete virtual device.");
-		std::shared_ptr<InsteonPeer> peer = getPeer(peerID);
-		if(!peer) return PVariable(new Variable(VariableType::tVoid));
-		uint64_t id = peer->getID();
+		if(peerId == 0) return Variable::createError(-2, "Unknown device.");
+		if(peerId & 0x80000000) return Variable::createError(-2, "Cannot delete virtual device.");
+
+		int32_t address;
+		std::string physicalInterfaceId;
+
+		{
+			std::shared_ptr<InsteonPeer> peer = getPeer(peerId);
+			if(!peer) return PVariable(new Variable(VariableType::tVoid));
+			address = peer->getAddress();
+			physicalInterfaceId = peer->getPhysicalInterfaceID();
+		}
 
 		bool defer = flags & 0x04;
 		bool force = flags & 0x02;
-		_unpairThreadMutex.lock();
-		_bl->threadManager.join(_unpairThread);
-		_bl->threadManager.start(_unpairThread, false, &InsteonCentral::unpair, this, id);
-		_unpairThreadMutex.unlock();
+
+		{
+			std::lock_guard<std::mutex> unpairGuard(_unpairThreadMutex);
+			_bl->threadManager.join(_unpairThread);
+			_bl->threadManager.start(_unpairThread, false, &InsteonCentral::unpair, this, peerId);
+		}
+
 		//Force delete
-		if(force) deletePeer(peer->getID());
+		if(force) deletePeer(peerId);
 		else
 		{
 			int32_t waitIndex = 0;
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-			while(_queueManager.get(peer->getAddress(), peer->getPhysicalInterfaceID()) && peerExists(id) && waitIndex < 20)
+			while(_queueManager.get(address, physicalInterfaceId) && peerExists(peerId) && waitIndex < 20)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 				waitIndex++;
 			}
 		}
 
-		if(!defer && !force && peerExists(id)) return Variable::createError(-1, "No answer from device.");
+		if(!defer && !force && peerExists(peerId)) return Variable::createError(-1, "No answer from device.");
 
 		return PVariable(new Variable(VariableType::tVoid));
 	}
