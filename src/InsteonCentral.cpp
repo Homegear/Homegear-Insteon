@@ -733,12 +733,9 @@ void InsteonCentral::deletePeer(uint64_t id)
 			if(_peers.find(peer->getAddress()) != _peers.end()) _peers.erase(peer->getAddress());
 		}
 
-		if(_currentPeer && _currentPeer->getID() == id) _currentPeer.reset();
-
 		int32_t i = 0;
 		while(peer.use_count() > 1 && i < 600)
 		{
-			if(_currentPeer && _currentPeer->getID() == id) _currentPeer.reset();
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			i++;
 		}
@@ -766,15 +763,6 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 	try
 	{
 		std::ostringstream stringStream;
-		if(_currentPeer)
-		{
-			if(command == "unselect" || command == "u")
-			{
-				_currentPeer.reset();
-				return "Peer unselected.\n";
-			}
-			return _currentPeer->handleCliCommand(command);
-		}
 		if(command == "help" || command == "h")
 		{
 			stringStream << "List of commands (shortcut in brackets):" << std::endl << std::endl;
@@ -890,7 +878,6 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 			if(!peerExists(peerID)) stringStream << "This peer is not paired to this central." << std::endl;
 			else
 			{
-				if(_currentPeer && _currentPeer->getID() == peerID) _currentPeer.reset();
 				deletePeer(peerID);
 				stringStream << "Removed peer " << std::to_string(peerID) << "." << std::endl;
 			}
@@ -931,7 +918,6 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 			if(!peerExists(peerID)) stringStream << "This peer is not paired to this central." << std::endl;
 			else
 			{
-				if(_currentPeer && _currentPeer->getID() == peerID) _currentPeer.reset();
 				stringStream << "Unpairing peer " << std::to_string(peerID) << std::endl;
 				unpair(peerID);
 			}
@@ -1174,47 +1160,6 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 				std::shared_ptr<InsteonPeer> peer = getPeer(peerID);
 				peer->setName(name);
 				stringStream << "Name set to \"" << name << "\"." << std::endl;
-			}
-			return stringStream.str();
-		}
-		else if(command.compare(0, 12, "peers select") == 0 || command.compare(0, 2, "ps") == 0)
-		{
-			uint64_t id = 0;
-
-			std::stringstream stream(command);
-			std::string element;
-			int32_t offset = (command.at(1) == 's') ? 0 : 1;
-			int32_t index = 0;
-			while(std::getline(stream, element, ' '))
-			{
-				if(index < 1 + offset)
-				{
-					index++;
-					continue;
-				}
-				else if(index == 1 + offset)
-				{
-					if(element == "help") break;
-					id = BaseLib::Math::getNumber(element, false);
-					if(id == 0) return "Invalid id.\n";
-				}
-				index++;
-			}
-			if(index == 1 + offset)
-			{
-				stringStream << "Description: This command selects a peer." << std::endl;
-				stringStream << "Usage: peers select PEERID" << std::endl << std::endl;
-				stringStream << "Parameters:" << std::endl;
-				stringStream << "  PEERID:\tThe id of the peer to select. Example: 513" << std::endl;
-				return stringStream.str();
-			}
-
-			_currentPeer = getPeer(id);
-			if(!_currentPeer) stringStream << "This peer is not paired to this central." << std::endl;
-			else
-			{
-				stringStream << "Peer with id " << std::hex << std::to_string(id) << " and device type 0x" << (int32_t)_currentPeer->getDeviceType() << " selected." << std::dec << std::endl;
-				stringStream << "For information about the peer's commands type: \"help\"" << std::endl;
 			}
 			return stringStream.str();
 		}
@@ -1628,7 +1573,12 @@ void InsteonCentral::handleNak(std::shared_ptr<InsteonPacket> packet)
 			{
 				//Just remove the peer. Probably the link database packet was sent twice, that's why we receive a NAK.
 				std::shared_ptr<InsteonPeer> peer = getPeer(packet->senderAddress());
-				if(peer) deletePeer(peer->getID());
+				if(peer)
+				{
+					uint64_t peerId = peer->getID();
+					peer.reset();
+					deletePeer(peerId);
+				}
 			}
 		}
 	}
@@ -1783,7 +1733,12 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
 		else if(queue->getQueueType() == PacketQueueType::UNPAIRING && sentPacket && sentPacket->payload()->size() > 3 && sentPacket->payload()->at(3) == 0xFF)
 		{
 			std::shared_ptr<InsteonPeer> peer = getPeer(packet->senderAddress());
-			if(peer) deletePeer(peer->getID());
+			if(peer)
+			{
+				uint64_t peerId = peer->getID();
+				peer.reset();
+				deletePeer(peerId);
+			}
 		}
 
 		queue->pop(true); //Messages are not popped by default.
@@ -1974,9 +1929,16 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
 	{
 		if(serialNumber.empty()) return Variable::createError(-2, "Unknown device.");
 		if(serialNumber[0] == '*') return Variable::createError(-2, "Cannot delete virtual device.");
-		std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber);
-		if(!peer) return PVariable(new Variable(VariableType::tVoid));
-		return deleteDevice(clientInfo, peer->getID(), flags);
+
+		uint64_t peerId = 0;
+
+		{
+			std::shared_ptr<InsteonPeer> peer = getPeer(serialNumber);
+			if(!peer) return PVariable(new Variable(VariableType::tVoid));
+			peerId = peer->getID();
+		}
+
+		return deleteDevice(clientInfo, peerId, flags);
 	}
 	catch(const std::exception& ex)
     {
@@ -1993,36 +1955,46 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
     return Variable::createError(-32500, "Unknown application error.");
 }
 
-PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerID, int32_t flags)
+PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint64_t peerId, int32_t flags)
 {
 	try
 	{
-		if(peerID == 0) return Variable::createError(-2, "Unknown device.");
-		if(peerID & 0x80000000) return Variable::createError(-2, "Cannot delete virtual device.");
-		std::shared_ptr<InsteonPeer> peer = getPeer(peerID);
-		if(!peer) return PVariable(new Variable(VariableType::tVoid));
-		uint64_t id = peer->getID();
+		if(peerId == 0) return Variable::createError(-2, "Unknown device.");
+		if(peerId & 0x80000000) return Variable::createError(-2, "Cannot delete virtual device.");
+
+		int32_t address;
+		std::string physicalInterfaceId;
+
+		{
+			std::shared_ptr<InsteonPeer> peer = getPeer(peerId);
+			if(!peer) return PVariable(new Variable(VariableType::tVoid));
+			address = peer->getAddress();
+			physicalInterfaceId = peer->getPhysicalInterfaceID();
+		}
 
 		bool defer = flags & 0x04;
 		bool force = flags & 0x02;
-		_unpairThreadMutex.lock();
-		_bl->threadManager.join(_unpairThread);
-		_bl->threadManager.start(_unpairThread, false, &InsteonCentral::unpair, this, id);
-		_unpairThreadMutex.unlock();
+
+		{
+			std::lock_guard<std::mutex> unpairGuard(_unpairThreadMutex);
+			_bl->threadManager.join(_unpairThread);
+			_bl->threadManager.start(_unpairThread, false, &InsteonCentral::unpair, this, peerId);
+		}
+
 		//Force delete
-		if(force) deletePeer(peer->getID());
+		if(force) deletePeer(peerId);
 		else
 		{
 			int32_t waitIndex = 0;
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-			while(_queueManager.get(peer->getAddress(), peer->getPhysicalInterfaceID()) && peerExists(id) && waitIndex < 20)
+			while(_queueManager.get(address, physicalInterfaceId) && peerExists(peerId) && waitIndex < 20)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 				waitIndex++;
 			}
 		}
 
-		if(!defer && !force && peerExists(id)) return Variable::createError(-1, "No answer from device.");
+		if(!defer && !force && peerExists(peerId)) return Variable::createError(-1, "No answer from device.");
 
 		return PVariable(new Variable(VariableType::tVoid));
 	}
