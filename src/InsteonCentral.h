@@ -106,13 +106,11 @@ protected:
 	std::atomic_bool _stopWorkerThread;
 	std::thread _workerThread;
 
-	std::atomic_bool _pairing;
 	QueueManager _queueManager;
 	PacketManager _receivedPackets;
 	PacketManager _sentPackets;
 	std::shared_ptr<InsteonMessages> _messages;
 
-	std::atomic<uint32_t> _timeLeftInPairingMode;
 	void pairingModeTimer(int32_t duration, bool debugOutput = true);
 	std::atomic_bool _stopPairingModeThread;
 	std::atomic_bool _abortPairingModeThread;
