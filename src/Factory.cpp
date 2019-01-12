@@ -31,7 +31,7 @@
 #include "../config.h"
 #include "GD.h"
 
-BaseLib::Systems::DeviceFamily* InsteonFactory::createDeviceFamily(BaseLib::SharedObjects* bl, BaseLib::Systems::DeviceFamily::IFamilyEventSink* eventHandler)
+BaseLib::Systems::DeviceFamily* InsteonFactory::createDeviceFamily(BaseLib::SharedObjects* bl, BaseLib::Systems::IFamilyEventSink* eventHandler)
 {
 	return new Insteon::Insteon(bl, eventHandler);
 }
