@@ -35,7 +35,7 @@
 namespace Insteon
 {
 
-Insteon::Insteon(BaseLib::SharedObjects* bl, IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler, INSTEON_FAMILY_ID, INSTEON_FAMILY_NAME)
+Insteon::Insteon(BaseLib::SharedObjects* bl, BaseLib::Systems::IFamilyEventSink* eventHandler) : BaseLib::Systems::DeviceFamily(bl, eventHandler, INSTEON_FAMILY_ID, INSTEON_FAMILY_NAME)
 {
 	GD::bl = bl;
 	GD::family = this;
