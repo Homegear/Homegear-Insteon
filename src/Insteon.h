@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Sathya Laufer
+/* Copyright 2013-2019 Homegear GmbH
  *
  * Homegear is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ class InsteonCentral;
 class Insteon : public BaseLib::Systems::DeviceFamily
 {
 public:
-	Insteon(BaseLib::SharedObjects* bl, IFamilyEventSink* eventHandler);
+	Insteon(BaseLib::SharedObjects* bl, BaseLib::Systems::IFamilyEventSink* eventHandler);
 	virtual ~Insteon();
 	virtual void dispose();
 
