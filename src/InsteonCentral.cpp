@@ -506,14 +506,14 @@ bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
 		if(_disposing) return false;
 		std::shared_ptr<InsteonPacket> insteonPacket(std::dynamic_pointer_cast<InsteonPacket>(packet));
 		if(!insteonPacket) return false;
-		if(GD::bl->debugLevel >= 4) std::cout << BaseLib::HelperFunctions::getTimeString(insteonPacket->timeReceived()) << " Insteon packet received: " + insteonPacket->hexString() << std::endl;
+		if(GD::bl->debugLevel >= 4) std::cout << BaseLib::HelperFunctions::getTimeString(insteonPacket->getTimeReceived()) << " Insteon packet received: " + insteonPacket->hexString() << std::endl;
 		if(insteonPacket->senderAddress() == _address) //Packet spoofed
 		{
 			std::shared_ptr<InsteonPeer> peer(getPeer(insteonPacket->destinationAddress()));
 			if(peer)
 			{
 				if(senderID != peer->getPhysicalInterfaceID()) return true; //Packet we sent was received by another interface
-				GD::out.printWarning("Warning: Central address of packet to peer " + std::to_string(peer->getID()) + " was spoofed. Packet was: " + packet->hexString());
+				GD::out.printWarning("Warning: Central address of packet to peer " + std::to_string(peer->getID()) + " was spoofed. Packet was: " + insteonPacket->hexString());
 				peer->serviceMessages->set("CENTRAL_ADDRESS_SPOOFED", 1, 0);
 				std::shared_ptr<std::vector<std::string>> valueKeys(new std::vector<std::string> { "CENTRAL_ADDRESS_SPOOFED" });
 				std::shared_ptr<std::vector<PVariable>> values(new std::vector<PVariable> { PVariable(new Variable((int32_t)1)) });
@@ -529,7 +529,7 @@ bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
 		if(!(_pairing && insteonPacket->messageType() == 0x01) && physicalInterface->getID() != senderID) return true;
 
 		bool handled = false;
-		if(_receivedPackets.set(insteonPacket->senderAddress(), insteonPacket, insteonPacket->timeReceived())) handled = true;
+		if(_receivedPackets.set(insteonPacket->senderAddress(), insteonPacket, insteonPacket->getTimeReceived())) handled = true;
 		if(insteonPacket->flags() == InsteonPacketFlags::DirectNak || insteonPacket->flags() == InsteonPacketFlags::GroupCleanupDirectNak)
 		{
 			handleNak(insteonPacket);
@@ -1556,9 +1556,9 @@ void InsteonCentral::handleNak(std::shared_ptr<InsteonPacket> packet)
 				else GD::out.printDebug("Debug: NACK received from 0x" + BaseLib::HelperFunctions::getHexString(packet->senderAddress(), 6));
 			}
 
-			if(sentPacket && sentPacket->messageType() == 0x2F && sentPacket->payload()->size() == 14)
+			if(sentPacket && sentPacket->messageType() == 0x2F && sentPacket->payload().size() == 14)
 			{
-				if(sentPacket->payload()->at(0) == 0x01 && sentPacket->payload()->at(1) == 0x00)
+				if(sentPacket->payload().at(0) == 0x01 && sentPacket->payload().at(1) == 0x00)
 				{
 					//First "read"
 					enablePairingMode(packet->interfaceID());
@@ -1701,12 +1701,12 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
 		if(!queue) return;
 		std::shared_ptr<InsteonPacket> sentPacket(_sentPackets.get(packet->senderAddress()));
 
-		if(queue->getQueueType() == PacketQueueType::PAIRING && sentPacket && sentPacket->messageType() == 0x2F && sentPacket->payload()->size() == 14)
+		if(queue->getQueueType() == PacketQueueType::PAIRING && sentPacket && sentPacket->messageType() == 0x2F && sentPacket->payload().size() == 14)
 		{
-			if(queue->peer && sentPacket->payload()->at(0) == 1 && packet->payload()->size() == 14 && (packet->payload()->at(5) & 0x80)) //Read and "record is in use"
+			if(queue->peer && sentPacket->payload().at(0) == 1 && packet->payload().size() == 14 && (packet->payload().at(5) & 0x80)) //Read and "record is in use"
 			{
-				int32_t address = (packet->payload()->at(7) << 16) + (packet->payload()->at(8) << 8) + packet->payload()->at(9);
-				if(packet->payload()->at(5) & 0x40) //Controller bit?
+				int32_t address = (packet->payload().at(7) << 16) + (packet->payload().at(8) << 8) + packet->payload().at(9);
+				if(packet->payload().at(5) & 0x40) //Controller bit?
 				{
 					if(address == queue->peer->getPhysicalInterface()->address()) //Peer already knows me
 					{
@@ -1724,7 +1724,7 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
 					GD::out.printWarning("Warning: Peer \"0x" + BaseLib::HelperFunctions::getHexString(packet->senderAddress(), 6) + "\" is already paired to another device with address \"0x" + BaseLib::HelperFunctions::getHexString(address, 6) + "\".");
 				}
 			}
-			else if(sentPacket->payload()->at(5) == 0xE2)
+			else if(sentPacket->payload().at(5) == 0xE2)
 			{
 				if(!peerExists(packet->senderAddress()))
 				{
@@ -1732,7 +1732,7 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
 				}
 			}
 		}
-		else if(queue->getQueueType() == PacketQueueType::UNPAIRING && sentPacket && sentPacket->payload()->size() > 3 && sentPacket->payload()->at(3) == 0xFF)
+		else if(queue->getQueueType() == PacketQueueType::UNPAIRING && sentPacket && sentPacket->payload().size() > 3 && sentPacket->payload().at(3) == 0xFF)
 		{
 			std::shared_ptr<InsteonPeer> peer = getPeer(packet->senderAddress());
 			if(peer)
@@ -1750,7 +1750,7 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
 			//Remove packets needed for a NAK as first response
 			while(!queue->isEmpty())
 			{
-				if(queue->front()->getType() == QueueEntryType::PACKET && queue->front()->getPacket()->payload()->size() == 14 && queue->front()->getPacket()->payload()->at(1) == 2 && queue->front()->getPacket()->messageType() == 0x2F)
+				if(queue->front()->getType() == QueueEntryType::PACKET && queue->front()->getPacket()->payload().size() == 14 && queue->front()->getPacket()->payload().at(1) == 2 && queue->front()->getPacket()->messageType() == 0x2F)
 				{
 					queue->processCurrentQueueEntry(false); //Necessary for the packet to be sent after silent popping
 					break;

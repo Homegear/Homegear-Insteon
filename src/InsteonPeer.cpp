@@ -598,7 +598,7 @@ void InsteonPeer::getValuesFromPacket(std::shared_ptr<InsteonPacket> packet, std
 			if(frame->subtype > -1 && packet->messageSubtype() != frame->subtype) continue;
 			int32_t channelIndex = frame->channelIndex;
 			int32_t channel = -1;
-			if(channelIndex >= 9 && (signed)packet->payload()->size() > (channelIndex - 9)) channel = packet->payload()->at(channelIndex - 9) - frame->channelIndexOffset;
+			if(channelIndex >= 9 && (signed)packet->payload().size() > (channelIndex - 9)) channel = packet->payload().at(channelIndex - 9) - frame->channelIndexOffset;
 			if(channel > -1 && frame->channelSize < 1.0) channel &= (0xFF >> (8 - std::lround(frame->channelSize * 10) % 10));
 			if(frame->channel > -1) channel = frame->channel;
 			if(frame->length > 0 && packet->length() != frame->length) continue;
