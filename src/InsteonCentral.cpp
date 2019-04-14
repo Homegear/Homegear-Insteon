@@ -30,6 +30,8 @@
 #include "InsteonCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace Insteon {
 
 InsteonCentral::InsteonCentral(ICentralEventSink* eventHandler) : BaseLib::Systems::ICentral(INSTEON_FAMILY_ID, GD::bl, eventHandler)

@@ -31,6 +31,8 @@
 #include "InsteonCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace Insteon
 {
 std::shared_ptr<BaseLib::Systems::ICentral> InsteonPeer::getCentral()
