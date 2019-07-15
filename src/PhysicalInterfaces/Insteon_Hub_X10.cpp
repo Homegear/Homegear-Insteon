@@ -386,20 +386,20 @@ void InsteonHubX10::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 			return;
 		}
 
+        std::shared_ptr<InsteonPacket> insteonPacket(std::dynamic_pointer_cast<InsteonPacket>(packet));
+        if(!insteonPacket) return;
+
 		if(!_initComplete)
     	{
-    		_out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "), because the init sequence is not completed: " + packet->hexString());
+    		_out.printWarning("Warning: !!!Not!!! sending (Port " + _settings->port + "), because the init sequence is not completed: " + insteonPacket->hexString());
     		_sendMutex.unlock();
     		return;
     	}
 
 		_lastAction = BaseLib::HelperFunctions::getTime();
 
-		std::shared_ptr<InsteonPacket> insteonPacket(std::dynamic_pointer_cast<InsteonPacket>(packet));
-		if(!insteonPacket) return;
-
 		//Don't move this, because packet->hexString() also calculates the checksum!
-		_out.printInfo("Info: Sending (" + _settings->id + "): " + packet->hexString());
+		_out.printInfo("Info: Sending (" + _settings->id + "): " + insteonPacket->hexString());
 
 		std::vector<char> requestPacket { 0x02, 0x62 };
 		requestPacket.push_back(insteonPacket->destinationAddress() >> 16);
@@ -408,7 +408,7 @@ void InsteonHubX10::sendPacket(std::shared_ptr<BaseLib::Systems::Packet> packet)
 		requestPacket.push_back(((uint8_t)insteonPacket->flags() << 5) + ((uint8_t)insteonPacket->extended() << 4) + (insteonPacket->hopsLeft() << 2) + insteonPacket->hopsMax());
 		requestPacket.push_back(insteonPacket->messageType());
 		requestPacket.push_back(insteonPacket->messageSubtype());
-		requestPacket.insert(requestPacket.end(), insteonPacket->payload()->begin(), insteonPacket->payload()->end());
+		requestPacket.insert(requestPacket.end(), insteonPacket->payload().begin(), insteonPacket->payload().end());
 
 		std::vector<uint8_t> responsePacket;
 		for(int32_t i = 0; i < 20; i++)
@@ -805,14 +805,14 @@ void InsteonHubX10::listen()
 			catch(const BaseLib::SocketClosedException& ex)
 			{
 				_stopped = true;
-				_out.printWarning("Warning: " + ex.what());
+				_out.printWarning("Warning: " + std::string(ex.what()));
 				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 				continue;
 			}
 			catch(const BaseLib::SocketOperationException& ex)
 			{
 				_stopped = true;
-				_out.printError("Error: " + ex.what());
+				_out.printError("Error: " + std::string(ex.what()));
 				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 				continue;
 			}

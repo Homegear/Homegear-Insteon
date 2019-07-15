@@ -52,51 +52,63 @@ enum class InsteonPacketFlags : uint32_t
 
 class InsteonPacket : public BaseLib::Systems::Packet
 {
-    public:
-        //Properties
-        InsteonPacket();
-        InsteonPacket(std::string packet, std::string interfaceID = "", int64_t timeReceived = 0);
-        InsteonPacket(std::vector<char>& packet, std::string interfaceID = "", int64_t timeReceived = 0);
-        InsteonPacket(std::vector<uint8_t>& packet, std::string interfaceID = "", int64_t timeReceived = 0);
-        InsteonPacket(uint8_t messageType, uint8_t messageSubtype, int32_t destinationAddress, uint8_t hopsLeft, uint8_t hopsMax, InsteonPacketFlags flags, std::vector<uint8_t> payload);
-        virtual ~InsteonPacket();
+public:
+    //Properties
+    InsteonPacket();
+    InsteonPacket(std::string packet, std::string interfaceID = "", int64_t timeReceived = 0);
+    InsteonPacket(std::vector<char>& packet, std::string interfaceID = "", int64_t timeReceived = 0);
+    InsteonPacket(std::vector<uint8_t>& packet, std::string interfaceID = "", int64_t timeReceived = 0);
+    InsteonPacket(uint8_t messageType, uint8_t messageSubtype, int32_t destinationAddress, uint8_t hopsLeft, uint8_t hopsMax, InsteonPacketFlags flags, std::vector<uint8_t> payload);
+    virtual ~InsteonPacket();
 
-        void import(std::vector<char>& packet);
-        void import(std::vector<uint8_t>& packet);
-        void import(std::string packetHex);
+    void import(std::vector<char>& packet);
+    void import(std::vector<uint8_t>& packet);
+    void import(std::string packetHex);
 
-        std::string interfaceID() { return _interfaceID; }
-        void setInterfaceID(std::string value) { _interfaceID = value; }
-        void setDestinationAddress(int32_t value) { _destinationAddress = value; }
-        bool extended() { return _extended; }
-        InsteonPacketFlags flags() { return _flags; }
-        void setFlags(InsteonPacketFlags value) { _flags = value; }
-        uint8_t hopsLeft() { return _hopsLeft; }
-        void setHopsLeft(uint8_t value) { _hopsLeft = value; }
-        uint8_t hopsMax() { return _hopsMax; }
-        void setHopsMax(uint8_t value) { _hopsMax = value; }
-        uint8_t messageType() { return _messageType; }
-        void setMessageType(uint8_t type) { _messageType = type; }
-        uint8_t messageSubtype() { return _messageSubtype; }
-        virtual std::string hexString();
-        virtual std::vector<char> byteArray();
+    uint8_t length() { return _length; }
+    int32_t senderAddress() { return _senderAddress; }
+    int32_t destinationAddress() { return _destinationAddress; }
+    uint8_t controlByte() { return _controlByte; }
+    std::string interfaceID() { return _interfaceID; }
+    void setInterfaceID(std::string value) { _interfaceID = value; }
+    void setDestinationAddress(int32_t value) { _destinationAddress = value; }
+    bool extended() { return _extended; }
+    InsteonPacketFlags flags() { return _flags; }
+    void setFlags(InsteonPacketFlags value) { _flags = value; }
+    uint8_t hopsLeft() { return _hopsLeft; }
+    void setHopsLeft(uint8_t value) { _hopsLeft = value; }
+    uint8_t hopsMax() { return _hopsMax; }
+    void setHopsMax(uint8_t value) { _hopsMax = value; }
+    uint8_t messageType() { return _messageType; }
+    void setMessageType(uint8_t type) { _messageType = type; }
+    uint8_t messageSubtype() { return _messageSubtype; }
+    std::vector<uint8_t>& payload() { return _payload; }
+    std::string hexString();
+    std::vector<char> byteArray();
 
-        virtual std::vector<uint8_t> getPosition(double index, double size, int32_t mask);
-        virtual void setPosition(double index, double size, std::vector<uint8_t>& value);
+    std::vector<uint8_t> getPosition(double index, double size, int32_t mask);
+    void setPosition(double index, double size, std::vector<uint8_t>& value);
 
-        bool equals(std::shared_ptr<InsteonPacket>& rhs);
-    protected:
-        std::string _interfaceID;
-        bool _extended = false;
-        InsteonPacketFlags _flags = InsteonPacketFlags::Direct;
-        uint8_t _hopsLeft = 0;
-        uint8_t _hopsMax = 0;
-        uint8_t _messageType = 0;
-        uint8_t _messageSubtype = 0;
+    bool equals(std::shared_ptr<InsteonPacket>& rhs);
+private:
+    static const std::array<uint8_t, 9> _bitmask;
 
-        virtual uint8_t getByte(std::string);
-        int32_t getInt(std::string);
-        void calculateChecksum();
+    uint8_t _length = 0;
+    int32_t _senderAddress = 0;
+    int32_t _destinationAddress = 0;
+    uint8_t _controlByte = 0;
+    std::vector<uint8_t> _payload;
+    std::string _interfaceID;
+    bool _extended = false;
+    InsteonPacketFlags _flags = InsteonPacketFlags::Direct;
+    uint8_t _hopsLeft = 0;
+    uint8_t _hopsMax = 0;
+    uint8_t _messageType = 0;
+    uint8_t _messageSubtype = 0;
+
+    virtual uint8_t getByte(std::string);
+    int32_t getInt(std::string);
+    void calculateChecksum();
 };
 
 }

@@ -32,6 +32,8 @@
 #include "InsteonCentral.h"
 #include "GD.h"
 
+#include <iomanip>
+
 namespace Insteon
 {
 
