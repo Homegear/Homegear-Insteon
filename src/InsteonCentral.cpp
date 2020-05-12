@@ -76,10 +76,6 @@ void InsteonCentral::init()
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -106,10 +102,6 @@ void InsteonCentral::dispose(bool wait)
 		_sentPackets.dispose(false);
 	}
     catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -148,11 +140,6 @@ void InsteonCentral::stopThreads()
     	_peersMutex.unlock();
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_peersMutex.unlock();
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_peersMutex.unlock();
@@ -176,10 +163,6 @@ void InsteonCentral::setUpInsteonMessages()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -196,10 +179,6 @@ std::shared_ptr<IPhysicalInterface> InsteonCentral::getPhysicalInterface(int32_t
 		return peer ? peer->getPhysicalInterface() : GD::defaultPhysicalInterface;
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -267,11 +246,6 @@ void InsteonCentral::worker()
 				_peersMutex.unlock();
 				GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 			}
-			catch(BaseLib::Exception& ex)
-			{
-				_peersMutex.unlock();
-				GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-			}
 			catch(...)
 			{
 				_peersMutex.unlock();
@@ -280,10 +254,6 @@ void InsteonCentral::worker()
 		}
 	}
     catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -319,11 +289,6 @@ void InsteonCentral::loadPeers()
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     	_peersMutex.unlock();
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    	_peersMutex.unlock();
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -354,10 +319,6 @@ void InsteonCentral::loadVariables()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -382,10 +343,6 @@ void InsteonCentral::savePeers(bool full)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -402,10 +359,6 @@ void InsteonCentral::saveVariables()
 		saveVariable(1, _centralAddress);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -428,10 +381,6 @@ std::shared_ptr<InsteonPeer> InsteonCentral::getPeer(int32_t address)
 		}
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -459,10 +408,6 @@ std::shared_ptr<InsteonPeer> InsteonCentral::getPeer(uint64_t id)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -484,10 +429,6 @@ std::shared_ptr<InsteonPeer> InsteonCentral::getPeer(std::string serialNumber)
 		}
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -574,10 +515,6 @@ bool InsteonCentral::onPacketReceived(std::string& senderID, std::shared_ptr<Bas
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -623,10 +560,6 @@ void InsteonCentral::sendPacket(std::shared_ptr<IPhysicalInterface> physicalInte
 		physicalInterface->sendPacket(packet);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -693,10 +626,6 @@ void InsteonCentral::unpair(uint64_t id)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -747,10 +676,6 @@ void InsteonCentral::deletePeer(uint64_t id)
 		GD::out.printMessage("Removed peer " + std::to_string(peer->getID()));
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1106,11 +1031,6 @@ std::string InsteonCentral::handleCliCommand(std::string command)
 				_peersMutex.unlock();
 				GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 			}
-			catch(BaseLib::Exception& ex)
-			{
-				_peersMutex.unlock();
-				GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-			}
 			catch(...)
 			{
 				_peersMutex.unlock();
@@ -1171,10 +1091,6 @@ std::string InsteonCentral::handleCliCommand(std::string command)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1223,10 +1139,6 @@ bool InsteonCentral::enqueuePendingQueues(int32_t deviceAddress, bool wait)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1253,10 +1165,6 @@ std::shared_ptr<InsteonPeer> InsteonCentral::createPeer(int32_t address, int32_t
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1272,10 +1180,6 @@ void InsteonCentral::addHomegearFeatures(std::shared_ptr<InsteonPeer> peer)
 		//if(peer->getDeviceType().type() == (uint32_t)DeviceType::INTEONBLA) addHomegearFeaturesValveDrive(peer);
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -1451,10 +1355,6 @@ void InsteonCentral::createPairingQueue(int32_t address, std::string interfaceID
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1490,10 +1390,6 @@ void InsteonCentral::enablePairingMode(std::string interfaceID)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1526,10 +1422,6 @@ void InsteonCentral::disablePairingMode(std::string interfaceID)
 		}
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1588,10 +1480,6 @@ void InsteonCentral::handleNak(std::shared_ptr<InsteonPacket> packet)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1629,10 +1517,6 @@ void InsteonCentral::handleAck(std::shared_ptr<InsteonPacket> packet)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1661,11 +1545,6 @@ void InsteonCentral::addPeer(std::shared_ptr<InsteonPeer> peer)
 			_peersMutex.unlock();
 			GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 		}
-		catch(BaseLib::Exception& ex)
-		{
-			_peersMutex.unlock();
-			GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-		}
 		catch(...)
 		{
 			_peersMutex.unlock();
@@ -1680,10 +1559,6 @@ void InsteonCentral::addPeer(std::shared_ptr<InsteonPeer> peer)
 		addHomegearFeatures(peer);
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -1767,10 +1642,6 @@ void InsteonCentral::handleDatabaseOpResponse(std::shared_ptr<InsteonPacket> pac
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1785,10 +1656,6 @@ void InsteonCentral::handleLinkingModeResponse(std::shared_ptr<InsteonPacket> pa
 		if(queue && queue->getQueueType() == PacketQueueType::PAIRING) queue->pop(); //Messages are not popped by default.
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -1877,10 +1744,6 @@ void InsteonCentral::handlePairingRequest(std::shared_ptr<InsteonPacket> packet)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1914,10 +1777,6 @@ PVariable InsteonCentral::addDevice(BaseLib::PRpcClientInfo clientInfo, std::str
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -1943,10 +1802,6 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, std::
 		return deleteDevice(clientInfo, peerId, flags);
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2004,10 +1859,6 @@ PVariable InsteonCentral::deleteDevice(BaseLib::PRpcClientInfo clientInfo, uint6
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -2022,10 +1873,6 @@ std::shared_ptr<Variable> InsteonCentral::getInstallMode(BaseLib::PRpcClientInfo
 		return std::shared_ptr<Variable>(new Variable(_timeLeftInPairingMode));
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2066,10 +1913,6 @@ PVariable InsteonCentral::putParamset(BaseLib::PRpcClientInfo clientInfo, std::s
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -2094,10 +1937,6 @@ PVariable InsteonCentral::putParamset(BaseLib::PRpcClientInfo clientInfo, uint64
 		return result;
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2127,10 +1966,6 @@ void InsteonCentral::pairingModeTimer(int32_t duration, bool debugOutput)
 		if(debugOutput) GD::out.printInfo("Info: Pairing mode disabled.");
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -2166,10 +2001,6 @@ std::shared_ptr<Variable> InsteonCentral::setInstallMode(BaseLib::PRpcClientInfo
 		return PVariable(new Variable(VariableType::tVoid));
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }

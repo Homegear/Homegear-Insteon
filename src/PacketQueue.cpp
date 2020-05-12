@@ -68,10 +68,6 @@ PacketQueue::~PacketQueue()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -129,10 +125,6 @@ void PacketQueue::serialize(std::vector<uint8_t>& encodedData)
 		}
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -197,12 +189,6 @@ void PacketQueue::unserialize(std::shared_ptr<std::vector<char>> serializedData,
     	clear();
     	_pendingQueues.reset();
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    	clear();
-    	_pendingQueues.reset();
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -235,13 +221,6 @@ void PacketQueue::dispose()
 		_pendingQueues.reset();
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    	_sendThreadMutex.unlock();
-    	_pushPendingQueueThreadMutex.unlock();
-    	_startResendThreadMutex.unlock();
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     	_sendThreadMutex.unlock();
@@ -354,13 +333,6 @@ void PacketQueue::resend(uint32_t threadId)
 		_startResendThreadMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-    	_sendThreadMutex.unlock();
-    	_startResendThreadMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_queueMutex.unlock();
@@ -411,12 +383,6 @@ void PacketQueue::push(std::shared_ptr<InsteonPacket> packet, bool stealthy, boo
 		_sendThreadMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-    	_sendThreadMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_queueMutex.unlock();
@@ -442,11 +408,6 @@ void PacketQueue::push(std::shared_ptr<PendingQueues>& pendingQueues)
 	catch(const std::exception& ex)
     {
 		 _queueMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
-    {
-    	 _queueMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
     catch(...)
@@ -480,10 +441,6 @@ void PacketQueue::push(std::shared_ptr<PacketQueue> pendingQueue, bool popImmedi
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -508,12 +465,6 @@ void PacketQueue::push(std::shared_ptr<InsteonMessage> message, bool forceResend
     {
 		_queueMutex.unlock();
 		_sendThreadMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-    	_sendThreadMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
     catch(...)
@@ -542,11 +493,6 @@ void PacketQueue::pushFront(std::shared_ptr<InsteonPacket> packet)
 		_queueMutex.unlock();
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_queueMutex.unlock();
@@ -561,10 +507,6 @@ void PacketQueue::processCurrentQueueEntry(bool startResendOnly)
 		nextQueueEntry(!startResendOnly);
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -586,10 +528,6 @@ void PacketQueue::stopPopWaitThread()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -606,10 +544,6 @@ void PacketQueue::popWait(uint32_t waitingTime)
 		GD::bl->threadManager.start(_popWaitThread, true, GD::bl->settings.packetQueueThreadPriority(), GD::bl->settings.packetQueueThreadPolicy(), &PacketQueue::popWaitThread, this, _popWaitThreadId++, waitingTime);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -639,10 +573,6 @@ void PacketQueue::popWaitThread(uint32_t threadId, uint32_t waitingTime)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -662,10 +592,6 @@ void PacketQueue::send(std::shared_ptr<InsteonPacket> packet, bool stealthy)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -682,10 +608,6 @@ void PacketQueue::stopResendThread()
 		_stopResendThread = false;
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -740,11 +662,6 @@ void PacketQueue::startResendThread(bool force)
 		_queueMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_queueMutex.unlock();
@@ -765,10 +682,6 @@ void PacketQueue::clear()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -785,10 +698,6 @@ void PacketQueue::sleepAndPushPendingQueue()
 		pushPendingQueue(true);
 	}
 	catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -870,12 +779,6 @@ void PacketQueue::pushPendingQueue(bool sendImmediately)
     {
 		_queueMutex.unlock();
 		_sendThreadMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-    	_sendThreadMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
     catch(...)
@@ -966,13 +869,6 @@ void PacketQueue::nextQueueEntry(bool sendImmediately)
 		_pushPendingQueueThreadMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-    	_sendThreadMutex.unlock();
-    	_pushPendingQueueThreadMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_queueMutex.unlock();
@@ -1013,11 +909,6 @@ void PacketQueue::pop(bool silently)
 	catch(const std::exception& ex)
     {
 		_queueMutex.unlock();
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
     catch(...)
