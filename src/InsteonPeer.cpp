@@ -701,7 +701,7 @@ void InsteonPeer::packetReceived(std::shared_ptr<InsteonPacket> packet)
 						}
 
 						valueKeys[*j]->push_back(i->first);
-						rpcValues[*j]->push_back(parameter.rpcParameter->convertFromPacket(i->second.value, parameter.invert(), true));
+						rpcValues[*j]->push_back(parameter.rpcParameter->convertFromPacket(i->second.value, parameter.mainRole(), true));
 					}
 				}
 			}
@@ -809,7 +809,7 @@ PVariable InsteonPeer::getParamset(BaseLib::PRpcClientInfo clientInfo, int32_t c
 				if(valuesCentral[channel].find(i->second->id) == valuesCentral[channel].end()) continue;
 				auto& rpcConfigurationParameter = valuesCentral[channel][i->second->id];
 				std::vector<uint8_t> parameterValue = rpcConfigurationParameter.getBinaryData();
-				element = i->second->convertFromPacket(parameterValue, rpcConfigurationParameter.invert(), false);
+				element = i->second->convertFromPacket(parameterValue, rpcConfigurationParameter.mainRole(), false);
 			}
 
 			if(!element) continue;
@@ -947,7 +947,7 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 		if(rpcParameter->physical->operationType == IPhysical::OperationType::Enum::store)
 		{
 			std::vector<uint8_t> parameterData = parameter.getBinaryData();
-			rpcParameter->convertToPacket(value, parameter.invert(), parameterData);
+			rpcParameter->convertToPacket(value, parameter.mainRole(), parameterData);
 			if(parameter.databaseId > 0) saveParameter(parameter.databaseId, parameterData);
 			else saveParameter(0, ParameterGroup::Type::Enum::variables, channel, valueKey, parameterData);
 			if(!valueKeys->empty())
@@ -972,7 +972,7 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 			PVariable toggleValue;
 			if(toggleParam.rpcParameter->logical->type == ILogical::Type::Enum::tBoolean)
 			{
-				toggleValue = toggleParam.rpcParameter->convertFromPacket(parameterData, toggleParam.invert(), false);
+				toggleValue = toggleParam.rpcParameter->convertFromPacket(parameterData, toggleParam.mainRole(), false);
 				toggleValue->booleanValue = !toggleValue->booleanValue;
 			}
 			else if(toggleParam.rpcParameter->logical->type == ILogical::Type::Enum::tInteger ||
@@ -982,14 +982,14 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 				std::vector<uint8_t> temp({0});
 				if(currentToggleValue != toggleCast->on) temp.at(0) = toggleCast->on;
 				else temp.at(0) = toggleCast->off;
-				toggleValue = toggleParam.rpcParameter->convertFromPacket(temp, toggleParam.invert(), false);
+				toggleValue = toggleParam.rpcParameter->convertFromPacket(temp, toggleParam.mainRole(), false);
 			}
 			else return Variable::createError(-6, "Toggle parameter has to be of type boolean, float or integer.");
 			return setValue(clientInfo, channel, toggleCast->parameter, toggleValue, wait);
 		}
 
 		std::vector<uint8_t> physicalValue;
-		rpcParameter->convertToPacket(value, parameter.invert(), physicalValue);
+		rpcParameter->convertToPacket(value, parameter.mainRole(), physicalValue);
 
 		std::vector<std::shared_ptr<Parameter::Packet>> setRequests;
 		if(!rpcParameter->setPackets.empty())
@@ -1094,7 +1094,7 @@ PVariable InsteonPeer::setValue(BaseLib::PRpcClientInfo clientInfo, uint32_t cha
 					PVariable logicalDefaultValue = valuesCentral.at(channel).at(*j).rpcParameter->logical->getDefaultValue();
 					std::vector<uint8_t> defaultValue;
                     BaseLib::Systems::RpcConfigurationParameter& tempParam = valuesCentral.at(channel).at(*j);
-                    tempParam.rpcParameter->convertToPacket(logicalDefaultValue, tempParam.invert(), defaultValue);
+                    tempParam.rpcParameter->convertToPacket(logicalDefaultValue, tempParam.mainRole(), defaultValue);
 					if(!tempParam.equals(defaultValue))
 					{
 						tempParam.setBinaryData(defaultValue);
