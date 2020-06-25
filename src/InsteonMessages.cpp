@@ -42,10 +42,6 @@ void InsteonMessages::add(std::shared_ptr<InsteonMessage> message)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -76,10 +72,6 @@ std::shared_ptr<InsteonMessage> InsteonMessages::find(std::shared_ptr<InsteonPac
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -97,10 +89,6 @@ std::shared_ptr<InsteonMessage> InsteonMessages::find(int32_t messageType, int32
 		}
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}

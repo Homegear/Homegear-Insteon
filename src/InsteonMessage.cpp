@@ -61,10 +61,6 @@ void InsteonMessage::invokeMessageHandler(std::shared_ptr<InsteonPacket> packet)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -84,10 +80,6 @@ bool InsteonMessage::typeIsEqual(int32_t messageType, int32_t messageSubtype, In
 		return true;
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -117,10 +109,6 @@ bool InsteonMessage::typeIsEqual(std::shared_ptr<InsteonPacket> packet)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
-	catch(BaseLib::Exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
 	catch(...)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -144,10 +132,6 @@ bool InsteonMessage::typeIsEqual(std::shared_ptr<InsteonMessage> message)
 		return true;
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -175,10 +159,6 @@ bool InsteonMessage::typeIsEqual(std::shared_ptr<InsteonMessage> message, std::s
 		return true;
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
@@ -239,10 +219,6 @@ bool InsteonMessage::checkAccess(std::shared_ptr<InsteonPacket> packet, std::sha
 		return true;
 	}
 	catch(const std::exception& ex)
-	{
-		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-	}
-	catch(BaseLib::Exception& ex)
 	{
 		GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 	}
