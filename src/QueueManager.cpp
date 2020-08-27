@@ -61,10 +61,6 @@ QueueManager::~QueueManager()
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -136,10 +132,6 @@ void QueueManager::worker()
 					{
 						GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 					}
-					catch(BaseLib::Exception& ex)
-					{
-						GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-					}
 					catch(...)
 					{
 						GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -152,11 +144,6 @@ void QueueManager::worker()
 				_queueMutex.unlock();
 				GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
 			}
-			catch(BaseLib::Exception& ex)
-			{
-				_queueMutex.unlock();
-				GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-			}
 			catch(...)
 			{
 				_queueMutex.unlock();
@@ -165,10 +152,6 @@ void QueueManager::worker()
 		}
 	}
     catch(const std::exception& ex)
-    {
-    	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
     	GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -241,10 +224,6 @@ std::shared_ptr<PacketQueue> QueueManager::createQueue(std::shared_ptr<IPhysical
 		return queueData->queue;
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
@@ -325,11 +304,6 @@ void QueueManager::resetQueue(int32_t address, std::string interfaceID, uint32_t
 		_queueMutex.unlock();
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
-    catch(BaseLib::Exception& ex)
-    {
-    	_queueMutex.unlock();
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
     catch(...)
     {
     	_queueMutex.unlock();
@@ -352,10 +326,6 @@ std::shared_ptr<PacketQueue> QueueManager::get(int32_t address, std::string inte
 		return queue;
 	}
 	catch(const std::exception& ex)
-    {
-        GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
-    }
-    catch(BaseLib::Exception& ex)
     {
         GD::out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
     }
