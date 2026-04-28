@@ -30,6 +30,8 @@
 #ifndef INSTEONPEER_H_
 #define INSTEONPEER_H_
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 #include "PendingQueues.h"

@@ -30,6 +30,8 @@
 #ifndef PENDINGQUEUESINSTEON_H_
 #define PENDINGQUEUESINSTEON_H_
 
+#include <cstdint>
+
 #include "PacketQueue.h"
 #include "InsteonPeer.h"
 

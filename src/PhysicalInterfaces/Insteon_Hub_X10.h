@@ -30,6 +30,8 @@
 #ifndef INSTEONHUBX10_H
 #define INSTEONHUBX10_H
 
+#include <cstdint>
+
 #include "../InsteonPacket.h"
 #include "IInsteonInterface.h"
 #include <homegear-base/BaseLib.h>

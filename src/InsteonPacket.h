@@ -30,6 +30,8 @@
 #ifndef INSTEONPACKET_H_
 #define INSTEONPACKET_H_
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 #include "PhysicalInterfaces/IInsteonInterface.h"
 
