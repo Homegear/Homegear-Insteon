@@ -30,6 +30,8 @@
 #ifndef INSTEONCENTRAL_H_
 #define INSTEONCENTRAL_H_
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 #include "InsteonPeer.h"
 #include "InsteonPacket.h"

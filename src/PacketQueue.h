@@ -30,6 +30,8 @@
 #ifndef PACKETQUEUE_H
 #define PACKETQUEUE_H
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 

@@ -30,6 +30,8 @@
 #ifndef INSTEON_H_
 #define INSTEON_H_
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 
 using namespace BaseLib;
