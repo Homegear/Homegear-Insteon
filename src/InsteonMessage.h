@@ -30,6 +30,8 @@
 #ifndef INSTEONMESSAGE_H
 #define INSTEONMESSAGE_H
 
+#include <cstdint>
+
 #include <homegear-base/BaseLib.h>
 #include "InsteonPacket.h"
 

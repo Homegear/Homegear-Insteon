@@ -30,6 +30,8 @@
 #ifndef INSTEONMESSAGES_H
 #define INSTEONMESSAGES_H
 
+#include <cstdint>
+
 #include "InsteonMessage.h"
 
 #include <iostream>
